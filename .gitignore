@@ -40,3 +40,6 @@ npm-debug.log
 
 # Direnv
 .envrc
+
+# Mac OS
+.DS_Store
