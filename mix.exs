@@ -60,6 +60,7 @@ defmodule Iclash.MixProject do
       {:bandit, "~> 1.5"},
       {:req, "~> 0.5.0"},
       {:knigge, "~> 1.4"},
+      {:typed_struct, "~> 0.1.4"},
 
       # dev
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false}
