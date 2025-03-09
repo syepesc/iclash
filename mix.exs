@@ -59,9 +59,10 @@ defmodule Iclash.MixProject do
       {:dns_cluster, "~> 0.1.1"},
       {:bandit, "~> 1.5"},
       {:req, "~> 0.5.0"},
+      {:knigge, "~> 1.4"},
 
       # dev
-      {:credo, "~> 1.7.11", only: [:dev, :test], runtime: false}
+      {:credo, "~> 1.7", only: [:dev, :test], runtime: false}
     ]
   end
 
