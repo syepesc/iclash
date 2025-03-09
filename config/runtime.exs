@@ -20,7 +20,26 @@ if System.get_env("PHX_SERVER") do
   config :iclash, IclashWeb.Endpoint, server: true
 end
 
-if config_env() == :prod do
+# ## Clash API Config
+clash_api_token =
+  System.get_env("CLASH_API_TOKEN") ||
+    raise """
+    environment variable CLASH_API_TOKEN is missing.
+    Please retrieve the token from your Clash of Clans API developer account.
+    """
+
+clash_api_base_url =
+  System.get_env("CLASH_API_BASE_URL") ||
+    raise """
+    environment variable CLASH_API_BASE_URL is missing.
+    Use this for API V1 -> https://api.clashofclans.com/v1
+    """
+
+config :iclash, ClashApiConfig,
+  api_token: clash_api_token,
+  base_url: clash_api_base_url
+
+if(config_env() == :prod) do
   database_url =
     System.get_env("DATABASE_URL") ||
       raise """

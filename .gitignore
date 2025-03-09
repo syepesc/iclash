@@ -37,3 +37,6 @@ npm-debug.log
 
 # ElixirLS
 .elixir_ls
+
+# Direnv
+.envrc
