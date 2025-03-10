@@ -13,7 +13,7 @@ defmodule Iclash.ClashApi.Models.PlayerTag do
   - Starts with "#".
   - Contains 9 characters, including the "#".
   """
-  @spec new(player_tag :: String.t()) :: __MODULE__.t()
+  @spec new(player_tag :: String.t()) :: __MODULE__.t() | no_return()
   def new(player_tag) do
     if not String.starts_with?(player_tag, "#") do
       raise("Player tag must start with '#'. e.i. '#ABCD1234'.")
