@@ -1,4 +1,4 @@
-defmodule Iclash.ClashApi.Client do
+defmodule Iclash.ClashApi do
   @moduledoc """
   Clash of Clans API Behaviour
   """
@@ -8,25 +8,25 @@ defmodule Iclash.ClashApi.Client do
   # compile time for all other builds
   use Knigge,
     otp_app: :iclash,
-    default: Iclash.ClashApi.Client.ClientImpl
+    default: Iclash.ClashApi.ClientImpl
 
-  alias Iclash.ClashApi.Models.ClientError
-  alias Iclash.ClashApi.Models.PlayerTag
-  alias Iclash.ClashApi.Models.Player
+  alias Iclash.Repo.Schemas.ClientError
+  alias Iclash.Repo.Schemas.PlayerTag
+  alias Iclash.Repo.Schemas.Player
 
   @callback get_player(player_tag :: PlayerTag.t()) ::
               {:ok, Player.t()} | {:error, ClientError.t()} | {:error, any()}
 end
 
-defmodule Iclash.ClashApi.Client.ClientImpl do
+defmodule Iclash.ClashApi.ClientImpl do
   @moduledoc """
   Clash of Clans API Implementation
   """
-  @behaviour Iclash.ClashApi.Client
+  @behaviour Iclash.ClashApi
 
-  alias Iclash.ClashApi.Models.ClientError
-  alias Iclash.ClashApi.Models.PlayerTag
-  alias Iclash.ClashApi.Models.Player
+  alias Iclash.Repo.Schemas.ClientError
+  alias Iclash.Repo.Schemas.PlayerTag
+  alias Iclash.Repo.Schemas.Player
 
   require Logger
 

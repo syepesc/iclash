@@ -1,4 +1,4 @@
-defmodule Iclash.ClashApi.Models.ClientError do
+defmodule Iclash.Repo.Schemas.ClientError do
   @moduledoc false
 
   use TypedStruct

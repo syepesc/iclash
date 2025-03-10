@@ -1,4 +1,4 @@
-defmodule Iclash.ClashApi.Models.PlayerTag do
+defmodule Iclash.Repo.Schemas.PlayerTag do
   @moduledoc false
 
   use TypedStruct
