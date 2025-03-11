@@ -1,22 +1,25 @@
 defmodule Iclash.Repo.Schemas.Player do
   @moduledoc false
 
-  use TypedStruct
+  use Ecto.Schema
+  import Ecto.Changeset
 
-  @typedoc "A Clash of Clans Player info"
-  typedstruct do
-    field :tag, String.t(), enforce: true
-    field :name, String.t()
+  @type t :: %__MODULE__{}
+
+  @starts_with_hash ~r/^#/
+  @letters_and_numbers ~r/^#[A-Za-z0-9]+$/
+
+  schema "players" do
+    field :tag, :string
+    field :name, :string
+    timestamps()
   end
 
-  @spec new(map()) :: __MODULE__.t() | no_return()
-  def new(%{} = player) do
-    tag = Map.fetch!(player, "tag")
-    name = Map.fetch!(player, "name")
-
-    %__MODULE__{
-      tag: tag,
-      name: name
-    }
+  def changeset(player, attrs) do
+    player
+    |> cast(attrs, [:tag, :name])
+    |> validate_required([:tag])
+    |> validate_format(:tag, @starts_with_hash, message: "Tag must start with '#'.")
+    |> validate_format(:tag, @letters_and_numbers, message: "Tag must be an alphanumeric string.")
   end
 end
