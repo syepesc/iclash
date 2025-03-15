@@ -43,6 +43,7 @@ defmodule Iclash.Repo.Schema.Player.Heroe do
 
   @required_fields [:name, :level, :max_level, :village]
 
+  @primary_key false
   embedded_schema do
     field :name, :string
     field :level, :integer
@@ -67,6 +68,7 @@ defmodule Iclash.Repo.Schema.Player.Heroe.Equipment do
 
   @required_fields [:name, :level, :max_level, :village]
 
+  @primary_key false
   embedded_schema do
     field :name, :string
     field :level, :integer
