@@ -1,8 +1,8 @@
-defmodule Iclash.Repo.Contexts.Player do
+defmodule Iclash.Repo.Context.Player do
   @moduledoc false
 
   import Ecto.Changeset
-  alias Iclash.Repo.Schemas.Player
+  alias Iclash.Repo.Schema.Player
 
   @type errors_map :: %{atom() => String.t()}
 

@@ -1,4 +1,4 @@
-defmodule Iclash.Repo.Enums.ClanRole do
+defmodule Iclash.Repo.Enum.ClanRole do
   @moduledoc """
   Enum for a Clash of Clans Player Clan Role.
   Possible values: [:not_member, :member, :leader, :admin, :coleader]

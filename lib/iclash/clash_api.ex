@@ -11,7 +11,7 @@ defmodule Iclash.ClashApi do
     default: Iclash.ClashApi.ClientImpl
 
   alias Iclash.ClashApi.ClientError
-  alias Iclash.Repo.Schemas.Player
+  alias Iclash.Repo.Schema.Player
 
   @callback get_player(player_tag :: String.t()) ::
               {:ok, Player.t()} | {:error, ClientError.t()} | {:error, any()}
@@ -24,7 +24,7 @@ defmodule Iclash.ClashApi.ClientImpl do
   @behaviour Iclash.ClashApi
 
   alias Iclash.ClashApi.ClientError
-  alias Iclash.Repo.Contexts.Player
+  alias Iclash.Repo.Context.Player
 
   require Logger
 

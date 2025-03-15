@@ -1,11 +1,11 @@
-defmodule Iclash.Repo.Schemas.Player do
+defmodule Iclash.Repo.Schema.Player do
   @moduledoc false
 
   use Ecto.Schema
   import Ecto.Changeset
 
-  alias Iclash.Repo.Enums.{ClanRole, WarPreference}
-  alias Iclash.Repo.Schemas.Player.Heroe
+  alias Iclash.Repo.Enum.{ClanRole, WarPreference}
+  alias Iclash.Repo.Schema.Player.Heroe
 
   @type t :: %__MODULE__{}
 
@@ -34,12 +34,12 @@ defmodule Iclash.Repo.Schemas.Player do
   end
 end
 
-defmodule Iclash.Repo.Schemas.Player.Heroe do
+defmodule Iclash.Repo.Schema.Player.Heroe do
   @moduledoc false
 
   use Ecto.Schema
-  alias Iclash.Repo.Enums.Village
-  alias Iclash.Repo.Schemas.Player.Heroe.Equipment
+  alias Iclash.Repo.Enum.Village
+  alias Iclash.Repo.Schema.Player.Heroe.Equipment
 
   @required_fields [:name, :level, :max_level, :village]
 
@@ -59,11 +59,11 @@ defmodule Iclash.Repo.Schemas.Player.Heroe do
   end
 end
 
-defmodule Iclash.Repo.Schemas.Player.Heroe.Equipment do
+defmodule Iclash.Repo.Schema.Player.Heroe.Equipment do
   @moduledoc false
 
   use Ecto.Schema
-  alias Iclash.Repo.Enums.Village
+  alias Iclash.Repo.Enum.Village
 
   @required_fields [:name, :level, :max_level, :village]
 
