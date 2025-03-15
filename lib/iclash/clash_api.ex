@@ -30,13 +30,10 @@ defmodule Iclash.ClashApi.ClientImpl do
 
   def get_player(tag) do
     req =
-      Req.new(
-        retry: :transient,
-        auth: {:bearer, api_token()},
-        base_url: base_url(),
+      base_request()
+      |> Req.merge(
         url: "/players/:player_tag",
-        path_params: [player_tag: tag],
-        decode_json: [keys: fn k -> k |> Macro.underscore() end]
+        path_params: [player_tag: tag]
       )
 
     case Req.get(req) do
@@ -58,6 +55,15 @@ defmodule Iclash.ClashApi.ClientImpl do
 
   defp api_token, do: Application.fetch_env!(:iclash, ClashApiConfig)[:api_token]
   defp base_url, do: Application.fetch_env!(:iclash, ClashApiConfig)[:base_url]
+
+  defp base_request() do
+    Req.new(
+      retry: :transient,
+      auth: {:bearer, api_token()},
+      base_url: base_url(),
+      decode_json: [keys: fn k -> k |> Macro.underscore() end]
+    )
+  end
 end
 
 defmodule Iclash.ClashApi.ClientError do
