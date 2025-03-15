@@ -4,6 +4,8 @@ defmodule Iclash.Repo.Context.Player do
   import Ecto.Changeset
   alias Iclash.Repo.Schema.Player
 
+  require Logger
+
   @type errors_map :: %{atom() => String.t()}
 
   @doc """
@@ -14,8 +16,13 @@ defmodule Iclash.Repo.Context.Player do
     changeset = Player.changeset(%Player{}, player)
 
     case changeset.valid? do
-      true -> {:ok, apply_changes(changeset)}
-      false -> {:error, traverse_errors(changeset, &changeset_errors_to_map/1)}
+      true ->
+        {:ok, apply_changes(changeset)}
+
+      false ->
+        errors = traverse_errors(changeset, &changeset_errors_to_map/1)
+        Logger.error("Error parsing player to struct. errors=#{inspect(errors)}")
+        {:error, errors}
     end
   end
 
