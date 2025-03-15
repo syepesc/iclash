@@ -35,7 +35,8 @@ defmodule Iclash.ClashApi.ClientImpl do
         auth: {:bearer, api_token()},
         base_url: base_url(),
         url: "/players/:player_tag",
-        path_params: [player_tag: tag]
+        path_params: [player_tag: tag],
+        decode_json: [keys: fn k -> k |> Macro.underscore() end]
       )
 
     case Req.get(req) do
