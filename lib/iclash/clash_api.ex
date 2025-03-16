@@ -12,8 +12,11 @@ defmodule Iclash.ClashApi do
 
   alias Iclash.Repo.Schema.Player
 
+  @type http_error :: {:error, {:http_error, Mint.HTTPError.t()}}
+  @type network_error :: {:error, {:network_error, any()}}
+
   @callback get_player(player_tag :: String.t()) ::
-              {:ok, Player.t()} | {:error, Req.Response.t()} | {:error, any()}
+              {:ok, Player.t()} | http_error() | network_error()
 end
 
 defmodule Iclash.ClashApi.ClientImpl do
@@ -50,17 +53,19 @@ defmodule Iclash.ClashApi.ClientImpl do
   end
 
   defp make_request(%Req.Request{} = req) do
+    Logger.info("Clash API request attempt")
+
     case Req.get(req) do
       {:ok, %Req.Response{status: 200} = response} ->
         {:ok, response.body}
 
-      {:ok, %Req.Response{status: _} = response} ->
-        Logger.error("Clash API error. request=#{inspect(req)} response=#{inspect(response)}")
-        {:error, response}
+      {:ok, %Req.Response{status: _} = reason} ->
+        Logger.error("HTTP request error. error=#{inspect(reason)} request=#{inspect(req)} ")
+        {:error, {:http_error, reason}}
 
       {:error, reason} ->
-        Logger.error("Request error. request=#{inspect(req)} reason=#{inspect(reason)}")
-        {:error, reason}
+        Logger.error("Network error. error=#{inspect(reason)} request=#{inspect(req)}")
+        {:error, {:network_error, reason}}
     end
   end
 end
