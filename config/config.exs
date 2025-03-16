@@ -9,7 +9,7 @@ import Config
 
 config :iclash,
   ecto_repos: [Iclash.Repo],
-  generators: [timestamp_type: :utc_datetime]
+  generators: [timestamp_type: :utc_datetime_usec]
 
 # Configures the endpoint
 config :iclash, IclashWeb.Endpoint,

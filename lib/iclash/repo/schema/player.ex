@@ -10,11 +10,11 @@ defmodule Iclash.Repo.Schema.Player do
 
   @type t :: %__MODULE__{}
 
-  @ttr_in_milliseconds :timer.hours(24)
+  @ttr_in_seconds 60 * 60 * 24
   @starts_with_hash ~r/^#/
   @letters_and_numbers ~r/^#[A-Za-z0-9]+$/
 
-  # `ttr`: Time To Refresh in milliseconds.
+  # `ttr`: UTC DateTime To Refresh record.
   # If current time is grater than `ttr`. Then, query api and refresh record.
   @optional_fields [:ttr]
   @requiered_fields [
@@ -29,7 +29,7 @@ defmodule Iclash.Repo.Schema.Player do
 
   @primary_key {:tag, :string, []}
   schema "players" do
-    field :ttr, :utc_datetime
+    field :ttr, :utc_datetime_usec
     field :name, :string
     field :trophies, :integer
     field :town_hall_level, :integer
@@ -44,7 +44,7 @@ defmodule Iclash.Repo.Schema.Player do
     embeds_many :troops, Troop
     embeds_many :spells, Spell
 
-    timestamps()
+    timestamps(type: :utc_datetime_usec)
   end
 
   def changeset(player, attrs) do
@@ -65,10 +65,10 @@ defmodule Iclash.Repo.Schema.Player do
     updated_at = fetch_field!(changeset, :updated_at)
 
     if is_nil(ttr) or is_nil(updated_at) do
-      ttr = DateTime.add(DateTime.utc_now(), @ttr_in_milliseconds, :millisecond)
+      ttr = DateTime.utc_now() |> DateTime.add(@ttr_in_seconds, :second)
       put_change(changeset, :ttr, ttr)
     else
-      ttr = DateTime.add(updated_at, @ttr_in_milliseconds, :millisecond)
+      ttr = DateTime.add(updated_at, @ttr_in_seconds, :second)
       put_change(changeset, :ttr, ttr)
     end
   end
