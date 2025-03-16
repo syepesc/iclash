@@ -1,34 +1,57 @@
 defmodule Iclash.Repo.Context.Player do
   @moduledoc false
 
-  import Ecto.Changeset
+  alias Iclash.ClashApi
+  alias Iclash.Repo
   alias Iclash.Repo.Schema.Player
 
   require Logger
 
-  @type errors_map :: %{atom() => String.t()}
+  @spec create_player!(Player.t()) :: Player.t()
+  def create_player!(%Player{} = player), do: Repo.insert!(player)
 
-  @doc """
-  Returns a Player struct from a map.
-  """
-  @spec from_map(player :: map()) :: {:ok, Player.t()} | {:error, errors_map()}
-  def from_map(%{} = player) do
-    changeset = Player.changeset(%Player{}, player)
+  @spec update_player!(Player.t() | Ecto.Changeset.t()) :: Player.t()
+  def update_player!(player), do: Repo.update!(player)
 
-    case changeset.valid? do
-      true ->
-        {:ok, apply_changes(changeset)}
+  @spec get_player(tag :: String.t()) :: Player.t() | {:error, :not_found}
+  def get_player(tag) when is_binary(tag) do
+    case Repo.get(Player, tag) do
+      nil ->
+        Logger.info("Player not found in DB, fetching info from Clash API.")
 
-      false ->
-        errors = traverse_errors(changeset, &changeset_errors_to_map/1)
-        Logger.error("Error parsing player to struct. errors=#{inspect(errors)}")
-        {:error, errors}
+        case ClashApi.get_player(tag) do
+          {:ok, player} ->
+            Logger.info("Player fetched from Clash API.")
+            create_player!(player)
+
+          {:error, _reason} ->
+            Logger.error("Failed to fetch Player from Clash API.")
+            {:error, :not_found}
+        end
+
+      %Player{} = player ->
+        now = DateTime.utc_now()
+        refresh_record? = DateTime.compare(player.ttr, now) in [:lt, :eq]
+
+        # Refresh and return record if ttr is in the past, else, return previous record.
+        if refresh_record? do
+          case ClashApi.get_player(tag) do
+            {:ok, refreshed_player} ->
+              Logger.info("Player fetched from Clash API.")
+              refreshed_player_map = Player.to_map(refreshed_player)
+
+              player
+              |> Player.changeset(refreshed_player_map)
+              |> update_player!()
+
+            {:error, _reason} ->
+              Logger.error("Failed to fetch Player from Clash API, returning previous record.")
+              player
+          end
+        else
+          Logger.info("Player found in DB.")
+          player
+        end
     end
-  end
-
-  defp changeset_errors_to_map({msg, opts} = _errors) do
-    Regex.replace(~r"%{(\w+)}", msg, fn _, key ->
-      opts |> Keyword.get(String.to_existing_atom(key), key) |> to_string()
-    end)
   end
 end

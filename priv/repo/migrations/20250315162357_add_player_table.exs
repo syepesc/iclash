@@ -17,10 +17,10 @@ defmodule Iclash.Repo.Migrations.AddPlayerTable do
         add :role, :string
         add :war_preference, :string
 
-        add :heroes, :jsonb, default: "[]", null: false
-        add :hero_equipment, :jsonb, default: "[]", null: false
-        add :troops, :jsonb, default: "[]", null: false
-        add :spells, :jsonb, default: "[]", null: false
+        add :heroes, :map, default: "[]", null: false
+        add :hero_equipment, :map, default: "[]", null: false
+        add :troops, :map, default: "[]", null: false
+        add :spells, :map, default: "[]", null: false
 
         timestamps(type: :utc_datetime_usec)
       end

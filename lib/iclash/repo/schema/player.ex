@@ -7,10 +7,14 @@ defmodule Iclash.Repo.Schema.Player do
   alias Iclash.Repo.Enum.{ClanRole, WarPreference}
   alias Iclash.Repo.Schema.Player.{Heroe, Troop, Spell}
   alias Iclash.Repo.Schema.Player.Heroe.Equipment
+  alias Iclash.Utils.StructUtils
+
+  require Logger
 
   @type t :: %__MODULE__{}
+  @type errors_map :: %{atom() => String.t()}
 
-  @ttr_in_seconds 60 * 60 * 24
+  @ttr_in_seconds 30
   @starts_with_hash ~r/^#/
   @letters_and_numbers ~r/^#[A-Za-z0-9]+$/
 
@@ -24,7 +28,9 @@ defmodule Iclash.Repo.Schema.Player do
     :town_hall_level,
     :best_trophies,
     :attack_wins,
-    :defense_wins
+    :defense_wins,
+    :role,
+    :war_preference
   ]
 
   @primary_key {:tag, :string, []}
@@ -60,6 +66,38 @@ defmodule Iclash.Repo.Schema.Player do
     |> calculate_ttr()
   end
 
+  @doc """
+  Returns a Player struct from a map.
+  """
+  @spec to_struct(player :: map()) :: {:ok, __MODULE__.t()} | {:error, errors_map()}
+  def to_struct(%{} = player) do
+    changeset = changeset(%__MODULE__{}, player)
+
+    case changeset.valid? do
+      true ->
+        {:ok, apply_changes(changeset)}
+
+      false ->
+        errors = traverse_errors(changeset, &changeset_errors_to_map/1)
+        Logger.error("Error parsing player to struct. errors=#{inspect(errors)}")
+        {:error, errors}
+    end
+  end
+
+  @doc """
+  Returns a map from a Player struct.
+  """
+  @spec to_map(player :: __MODULE__.t()) :: map()
+  def to_map(%__MODULE__{} = player) do
+    StructUtils.deep_struct_to_map(player)
+  end
+
+  defp changeset_errors_to_map({msg, opts} = _errors) do
+    Regex.replace(~r"%{(\w+)}", msg, fn _, key ->
+      opts |> Keyword.get(String.to_existing_atom(key), key) |> to_string()
+    end)
+  end
+
   defp calculate_ttr(changeset) do
     ttr = fetch_field!(changeset, :ttr)
     updated_at = fetch_field!(changeset, :updated_at)
@@ -83,7 +121,6 @@ defmodule Iclash.Repo.Schema.Player.Heroe do
 
   @required_fields [:name, :level, :max_level, :village]
 
-  @primary_key false
   embedded_schema do
     field :name, :string
     field :level, :integer
@@ -108,7 +145,6 @@ defmodule Iclash.Repo.Schema.Player.Heroe.Equipment do
 
   @required_fields [:name, :level, :max_level, :village]
 
-  @primary_key false
   embedded_schema do
     field :name, :string
     field :level, :integer
@@ -131,7 +167,6 @@ defmodule Iclash.Repo.Schema.Player.Spell do
 
   @required_fields [:name, :level, :max_level, :village]
 
-  @primary_key false
   embedded_schema do
     field :name, :string
     field :level, :integer
@@ -154,7 +189,6 @@ defmodule Iclash.Repo.Schema.Player.Troop do
 
   @required_fields [:name, :level, :max_level, :village]
 
-  @primary_key false
   embedded_schema do
     field :name, :string
     field :level, :integer

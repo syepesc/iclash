@@ -25,7 +25,7 @@ defmodule Iclash.ClashApi.ClientImpl do
   """
   @behaviour Iclash.ClashApi
 
-  alias Iclash.Repo.Context.Player
+  alias Iclash.Repo.Schema.Player
 
   require Logger
 
@@ -35,7 +35,7 @@ defmodule Iclash.ClashApi.ClientImpl do
       |> Req.merge(url: "/players/:player_tag", path_params: [player_tag: tag])
 
     with {:ok, body} <- make_request(req),
-         {:ok, player} <- Player.from_map(body) do
+         {:ok, %Player{} = player} <- Player.to_struct(body) do
       {:ok, player}
     end
   end
