@@ -14,13 +14,10 @@ defmodule Iclash.Repo.Schema.Player do
   @type t :: %__MODULE__{}
   @type errors_map :: %{atom() => String.t()}
 
-  @ttr_in_seconds 30
   @starts_with_hash ~r/^#/
   @letters_and_numbers ~r/^#[A-Za-z0-9]+$/
 
-  # `ttr`: UTC DateTime To Refresh record.
-  # If current time is grater than `ttr`. Then, query api and refresh record.
-  @optional_fields [:ttr]
+  @optional_fields []
   @requiered_fields [
     :tag,
     :name,
@@ -35,7 +32,6 @@ defmodule Iclash.Repo.Schema.Player do
 
   @primary_key {:tag, :string, []}
   schema "players" do
-    field :ttr, :utc_datetime_usec
     field :name, :string
     field :trophies, :integer
     field :town_hall_level, :integer
@@ -63,7 +59,6 @@ defmodule Iclash.Repo.Schema.Player do
     |> validate_required(@requiered_fields)
     |> validate_format(:tag, @starts_with_hash, message: "Tag must start with '#'.")
     |> validate_format(:tag, @letters_and_numbers, message: "Tag must be an alphanumeric string.")
-    |> calculate_ttr()
   end
 
   @doc """
@@ -96,19 +91,6 @@ defmodule Iclash.Repo.Schema.Player do
     Regex.replace(~r"%{(\w+)}", msg, fn _, key ->
       opts |> Keyword.get(String.to_existing_atom(key), key) |> to_string()
     end)
-  end
-
-  defp calculate_ttr(changeset) do
-    ttr = fetch_field!(changeset, :ttr)
-    updated_at = fetch_field!(changeset, :updated_at)
-
-    if is_nil(ttr) or is_nil(updated_at) do
-      ttr = DateTime.utc_now() |> DateTime.add(@ttr_in_seconds, :second)
-      put_change(changeset, :ttr, ttr)
-    else
-      ttr = DateTime.add(updated_at, @ttr_in_seconds, :second)
-      put_change(changeset, :ttr, ttr)
-    end
   end
 end
 

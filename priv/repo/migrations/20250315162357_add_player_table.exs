@@ -7,7 +7,6 @@ defmodule Iclash.Repo.Migrations.AddPlayerTable do
     def change do
       create table(:players, primary_key: false) do
         add :tag, :string, primary_key: true
-        add :ttr, :utc_datetime_usec
         add :name, :string, null: false
         add :trophies, :integer, null: false
         add :town_hall_level, :integer, null: false

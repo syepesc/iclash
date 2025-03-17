@@ -17,7 +17,7 @@ defmodule Iclash.Repo.Context.Player do
   def get_player(tag) when is_binary(tag) do
     case Repo.get(Player, tag) do
       nil ->
-        Logger.info("Player not found in DB, fetching info from Clash API.")
+        Logger.info("Player not found in DB, fetching from Clash API.")
 
         case ClashApi.get_player(tag) do
           {:ok, player} ->
@@ -30,28 +30,8 @@ defmodule Iclash.Repo.Context.Player do
         end
 
       %Player{} = player ->
-        now = DateTime.utc_now()
-        refresh_record? = DateTime.compare(player.ttr, now) in [:lt, :eq]
-
-        # Refresh and return record if ttr is in the past, else, return previous record.
-        if refresh_record? do
-          case ClashApi.get_player(tag) do
-            {:ok, refreshed_player} ->
-              Logger.info("Player fetched from Clash API.")
-              refreshed_player_map = Player.to_map(refreshed_player)
-
-              player
-              |> Player.changeset(refreshed_player_map)
-              |> update_player!()
-
-            {:error, _reason} ->
-              Logger.error("Failed to fetch Player from Clash API, returning previous record.")
-              player
-          end
-        else
-          Logger.info("Player found in DB.")
-          player
-        end
+        Logger.info("Player found in DB.")
+        player
     end
   end
 end
