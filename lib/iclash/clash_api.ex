@@ -13,7 +13,7 @@ defmodule Iclash.ClashApi do
   alias Iclash.Repo.Schema.Player
 
   @type http_error :: {:error, {:http_error, Mint.HTTPError.t()}}
-  @type network_error :: {:error, {:network_error, any()}}
+  @type network_error :: {:error, {:network_error, Mint.TransportError.t()}}
 
   @callback get_player(player_tag :: String.t()) ::
               {:ok, Player.t()} | http_error() | network_error()
