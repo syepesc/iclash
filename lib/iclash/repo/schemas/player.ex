@@ -1,11 +1,11 @@
-defmodule Iclash.Repo.Schema.Player do
+defmodule Iclash.Repo.Schemas.Player do
   @moduledoc false
 
   use Ecto.Schema
   import Ecto.Changeset
 
-  alias Iclash.Repo.Enum.{ClanRole, WarPreference}
-  alias Iclash.Repo.Schema.Heroe
+  alias Iclash.Repo.Enums.{ClanRole, WarPreference}
+  alias Iclash.Repo.Schemas.Heroe
   alias Iclash.Utils.StructUtils
 
   require Logger

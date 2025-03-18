@@ -2,7 +2,7 @@ defmodule Iclash.DomainType.Player do
   @moduledoc false
 
   alias Iclash.Repo
-  alias Iclash.Repo.Schema.Player
+  alias Iclash.Repo.Schemas.Player
 
   require Logger
 

@@ -1,9 +1,9 @@
-defmodule Iclash.Repo.Schema.Heroe do
+defmodule Iclash.Repo.Schemas.Heroe do
   @moduledoc false
 
   use Ecto.Schema
-  alias Iclash.Repo.Enum.Village
-  alias Iclash.Repo.Schema.Player
+  alias Iclash.Repo.Enums.Village
+  alias Iclash.Repo.Schemas.Player
 
   @required_fields [:name, :level, :max_level, :village]
 

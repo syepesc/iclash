@@ -10,7 +10,7 @@ defmodule Iclash.ClashApi do
     otp_app: :iclash,
     default: Iclash.ClashApi.ClientImpl
 
-  alias Iclash.Repo.Schema.Player
+  alias Iclash.Repo.Schemas.Player
 
   @type http_error :: {:error, {:http_error, Mint.HTTPError.t()}}
   @type network_error :: {:error, {:network_error, Mint.TransportError.t()}}
@@ -25,7 +25,7 @@ defmodule Iclash.ClashApi.ClientImpl do
   """
   @behaviour Iclash.ClashApi
 
-  alias Iclash.Repo.Schema.Player
+  alias Iclash.Repo.Schemas.Player
 
   require Logger
 
