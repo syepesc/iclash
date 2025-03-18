@@ -1,4 +1,4 @@
-defmodule Iclash.Repo.Migrations.AddPlayerTable do
+defmodule Iclash.Repo.Migrations.AddPlayersTable do
   use Ecto.Migration
 
   defmodule Iclash.Repo.Migrations.CreatePlayers do
@@ -13,16 +13,12 @@ defmodule Iclash.Repo.Migrations.AddPlayerTable do
         add :best_trophies, :integer, null: false
         add :attack_wins, :integer, null: false
         add :defense_wins, :integer, null: false
-        add :role, :string
-        add :war_preference, :string
-
-        add :heroes, :map, default: "[]", null: false
-        add :hero_equipment, :map, default: "[]", null: false
-        add :troops, :map, default: "[]", null: false
-        add :spells, :map, default: "[]", null: false
-
+        add :role, :string, null: false
+        add :war_preference, :string, null: false
         timestamps(type: :utc_datetime_usec)
       end
+
+      create unique_index(:players, [:tag], name: :players_unique_tag_index)
     end
   end
 end
