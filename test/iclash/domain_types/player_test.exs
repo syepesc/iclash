@@ -1,7 +1,7 @@
-defmodule Iclash.DomainType.PlayerTest do
+defmodule Iclash.DomainTypes.PlayerTest do
   use Iclash.DataCase, async: true
 
-  alias Iclash.DomainType.Player, as: Player
+  alias Iclash.DomainTypes.Player, as: Player
   alias Iclash.Repo.Schemas.Player, as: PlayerSchema
 
   setup do

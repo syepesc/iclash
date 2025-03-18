@@ -1,4 +1,4 @@
-defmodule Iclash.DomainType.Player do
+defmodule Iclash.DomainTypes.Player do
   @moduledoc false
 
   alias Iclash.Repo
