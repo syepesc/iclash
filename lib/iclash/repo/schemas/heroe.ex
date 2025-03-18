@@ -13,7 +13,12 @@ defmodule Iclash.Repo.Schemas.Heroe do
     field :max_level, :integer
     field :village, Village
 
-    belongs_to :player, Player, type: :string, foreign_key: :tag, on_replace: :delete
+    belongs_to :player, Player,
+      type: :string,
+      foreign_key: :tag,
+      references: :tag,
+      on_replace: :delete
+
     timestamps(type: :utc_datetime_usec)
 
     def changeset(heroe, attrs) do
