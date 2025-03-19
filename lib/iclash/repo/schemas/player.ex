@@ -42,7 +42,11 @@ defmodule Iclash.Repo.Schemas.Player do
     field :war_preference, WarPreference
 
     # The on_delete behaviour MUST be defined in the assoc migration using: references().
-    has_many :heroes, Heroe, foreign_key: :tag, on_delete: :delete_all
+    has_many :heroes, Heroe,
+      foreign_key: :player_id,
+      references: :tag,
+      on_replace: :delete_if_exists
+
     timestamps(type: :utc_datetime_usec)
   end
 
@@ -50,8 +54,8 @@ defmodule Iclash.Repo.Schemas.Player do
     player
     |> cast(attrs, @requiered_fields ++ @optional_fields)
     |> cast_assoc(:heroes, with: &Heroe.changeset/2)
-    |> unique_constraint([:tag], name: :players_unique_tag_index, message: "Tag must be unique.")
     |> validate_required(@requiered_fields)
+    |> unique_constraint([:tag], message: "Tag must be unique.")
     |> validate_format(:tag, @starts_with_hash, message: "Tag must start with '#'.")
     |> validate_format(:tag, @letters_and_numbers, message: "Tag must be an alphanumeric string.")
   end

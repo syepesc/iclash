@@ -10,13 +10,11 @@ defmodule Iclash.ClashApi do
     otp_app: :iclash,
     default: Iclash.ClashApi.ClientImpl
 
-  alias Iclash.Repo.Schemas.Player
-
   @type http_error :: {:error, {:http_error, Mint.HTTPError.t()}}
   @type network_error :: {:error, {:network_error, Mint.TransportError.t()}}
 
   @callback get_player(player_tag :: String.t()) ::
-              {:ok, Player.t()} | http_error() | network_error()
+              {:ok, Req.Response.t()} | http_error() | network_error()
 end
 
 defmodule Iclash.ClashApi.ClientImpl do
@@ -25,19 +23,12 @@ defmodule Iclash.ClashApi.ClientImpl do
   """
   @behaviour Iclash.ClashApi
 
-  alias Iclash.Repo.Schemas.Player
-
   require Logger
 
   def get_player(tag) do
-    req =
-      base_request()
-      |> Req.merge(url: "/players/:player_tag", path_params: [player_tag: tag])
-
-    with {:ok, body} <- make_request(req),
-         {:ok, %Player{} = player} <- Player.to_struct(body) do
-      {:ok, player}
-    end
+    base_request()
+    |> Req.merge(url: "/players/:player_tag", path_params: [player_tag: tag])
+    |> make_request()
   end
 
   defp api_token, do: Application.fetch_env!(:iclash, ClashApiConfig)[:api_token]
@@ -57,7 +48,7 @@ defmodule Iclash.ClashApi.ClientImpl do
 
     case Req.get(req) do
       {:ok, %Req.Response{status: 200} = response} ->
-        {:ok, response.body}
+        {:ok, response}
 
       {:ok, %Req.Response{status: _} = reason} ->
         Logger.error("HTTP request error. error=#{inspect(reason)} request=#{inspect(req)} ")

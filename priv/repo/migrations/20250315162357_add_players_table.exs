@@ -15,10 +15,11 @@ defmodule Iclash.Repo.Migrations.AddPlayersTable do
         add :defense_wins, :integer, null: false
         add :role, :string, null: false
         add :war_preference, :string, null: false
+
         timestamps(type: :utc_datetime_usec)
       end
 
-      create unique_index(:players, [:tag], name: :players_unique_tag_index)
+      create unique_index(:players, [:tag])
     end
   end
 end
