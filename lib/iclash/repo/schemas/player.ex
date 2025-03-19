@@ -16,7 +16,8 @@ defmodule Iclash.Repo.Schemas.Player do
   @starts_with_hash ~r/^#/
   @letters_and_numbers ~r/^#[A-Za-z0-9]+$/
 
-  @optional_fields []
+  # Adding timestamps as optionnal fields comes handy when testing with a fixed time.
+  @optional_fields [:inserted_at, :updated_at]
   @requiered_fields [
     :tag,
     :name,
