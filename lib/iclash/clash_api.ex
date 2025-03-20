@@ -61,7 +61,7 @@ defmodule Iclash.ClashApi.ClientImpl do
         {:ok, response.body}
 
       {:ok, %Req.Response{status: _} = reason} ->
-        Logger.error("HTTP request error. error=#{inspect(reason)} request=#{inspect(req)} ")
+        Logger.error("HTTP request error. error=#{inspect(reason)} request=#{inspect(req)}")
         {:error, {:http_error, reason}}
 
       {:error, reason} ->
