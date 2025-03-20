@@ -3,7 +3,7 @@ defmodule Iclash.Repo.Migrations.AddHeroesTable do
 
   def change do
     create table(:heroes, primary_key: false) do
-      add :player_id,
+      add :player_tag,
           references(:players,
             column: :tag,
             type: :string,
@@ -13,7 +13,7 @@ defmodule Iclash.Repo.Migrations.AddHeroesTable do
           primary_key: true
 
       add :name, :string, primary_key: true
-      add :level, :integer, null: false
+      add :level, :integer, primary_key: true
       add :max_level, :integer, null: false
       add :village, :string, null: false
 

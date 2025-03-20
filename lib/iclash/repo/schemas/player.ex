@@ -41,16 +41,16 @@ defmodule Iclash.Repo.Schemas.Player do
     field :role, ClanRole
     field :war_preference, WarPreference
 
-    # The on_delete behaviour MUST be defined in the assoc migration using: references().
+    # The `:on_delete` behaviour MUST be defined in the assoc migration using: references().
     has_many :heroes, Heroe,
-      foreign_key: :player_id,
+      foreign_key: :player_tag,
       references: :tag,
       on_replace: :delete_if_exists
 
     timestamps(type: :utc_datetime_usec)
   end
 
-  def changeset(player, attrs) do
+  def changeset(%__MODULE__{} = player, attrs \\ %{}) do
     player
     |> cast(attrs, @requiered_fields ++ @optional_fields)
     |> cast_assoc(:heroes, with: &Heroe.changeset/2)

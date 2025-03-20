@@ -8,7 +8,7 @@ defmodule Iclash.Repo.Schemas.Heroe do
   alias Iclash.Repo.Schemas.Player
 
   # Adding timestamps as optionnal fields comes handy when testing with a fixed time.
-  @optional_fields [:player_id, :inserted_at, :updated_at]
+  @optional_fields [:player_tag, :inserted_at, :updated_at]
   @required_fields [:name, :level, :max_level, :village]
 
   # To define a composite-key we need to add `primary_key: true` to
@@ -16,12 +16,12 @@ defmodule Iclash.Repo.Schemas.Heroe do
   @primary_key false
   schema "heroes" do
     field :name, :string, primary_key: true
-    field :level, :integer
+    field :level, :integer, primary_key: true
     field :max_level, :integer
     field :village, Village
 
     belongs_to :player, Player,
-      foreign_key: :player_id,
+      foreign_key: :player_tag,
       primary_key: true,
       type: :string,
       references: :tag,
@@ -30,7 +30,7 @@ defmodule Iclash.Repo.Schemas.Heroe do
     timestamps(type: :utc_datetime_usec)
   end
 
-  def changeset(heroe, attrs) do
+  def changeset(%__MODULE__{} = heroe, attrs \\ %{}) do
     heroe
     |> cast(attrs, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
