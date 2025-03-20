@@ -48,6 +48,7 @@ defmodule Iclash.ClashApi.ClientImpl do
       retry: :transient,
       auth: {:bearer, api_token()},
       base_url: base_url(),
+      # Transform keys from camelCase to snake_case.
       decode_json: [keys: fn k -> k |> Macro.underscore() end]
     )
   end
