@@ -45,7 +45,8 @@ defmodule Iclash.Repo.Schemas.Player do
     has_many :heroes, Heroe,
       foreign_key: :player_tag,
       references: :tag,
-      on_replace: :delete_if_exists
+      on_replace: :delete_if_exists,
+      preload_order: [desc: :updated_at]
 
     timestamps(type: :utc_datetime_usec)
   end
