@@ -12,6 +12,10 @@ defmodule Iclash.DomainTypes.Player do
 
   require Logger
 
+  @doc """
+  Get a player by tag.
+  If the player is not found in the database, it will fetch it from the Clash API.
+  """
   @spec get_player(tag :: String.t()) :: Player.t() | {:error, :not_found}
   def get_player(tag) do
     result =
@@ -25,6 +29,11 @@ defmodule Iclash.DomainTypes.Player do
     end
   end
 
+  @doc """
+  Upsert a player.
+  If the player does not exist in the database, it will be inserted.
+  If the player exists, it will be updated, keeping history of the Player Heroes.
+  """
   @spec upsert_player(player :: Player.t()) ::
           {:ok, Player.t()} | {:error, any()} | Ecto.Multi.failure()
   def upsert_player(%Player{} = player) do
