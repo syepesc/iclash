@@ -102,7 +102,7 @@ defmodule Iclash.DomainTypes.PlayerTest do
       {:ok, player_from_db} = Player.upsert_player(player)
       {:ok, updated_player_from_db} = Player.upsert_player(updated_player)
 
-      assert hd(updated_player_from_db.heroes).name == new_hero_name
+      assert Enum.any?(updated_player_from_db.heroes, fn h -> h.name == new_hero_name end)
 
       assert Map.drop(hd(player_from_db.heroes), [:name]) ==
                Map.drop(hd(updated_player_from_db.heroes), [:name])

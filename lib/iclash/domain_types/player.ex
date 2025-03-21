@@ -41,28 +41,22 @@ defmodule Iclash.DomainTypes.Player do
   @spec upsert_player(player :: Player.t()) ::
           {:ok, Player.t()} | {:error, any()} | Ecto.Multi.failure()
   def upsert_player(%Player{} = player) do
-    case get_player(player.tag) do
-      {:error, :not_found} ->
-        Repo.insert(player)
+    Multi.new()
+    |> Multi.append(insert_query_for_player(player))
+    |> Multi.append(insert_queries_for_heroes(player.tag, player.heroes))
+    |> Repo.transaction()
+    |> case do
+      {:ok, _transaction_result} ->
+        Logger.info("Player upserted successfully. player_tag=#{player.tag}")
+        {:ok, get_player(player.tag)}
 
-      player_from_db ->
-        Multi.new()
-        |> Multi.append(build_multi_for_player(player))
-        |> Multi.append(build_multi_for_heroes(player.tag, player_from_db.heroes, player.heroes))
-        |> Repo.transaction()
-        |> case do
-          {:ok, _transaction_result} ->
-            Logger.info("Player upserted successfully. player_tag=#{player.tag}")
-            {:ok, get_player(player.tag)}
-
-          {:error, reason} ->
-            Logger.error("Transaction error, failed to upsert player. error=#{inspect(reason)}")
-            {:error, reason}
-        end
+      {:error, reason} ->
+        Logger.error("Transaction error, failed to upsert player. error=#{inspect(reason)}")
+        {:error, reason}
     end
   end
 
-  defp build_multi_for_player(player) do
+  defp insert_query_for_player(player) do
     Multi.new()
     |> Multi.insert(
       {:upsert_player, player.tag},
@@ -73,11 +67,11 @@ defmodule Iclash.DomainTypes.Player do
     )
   end
 
-  defp build_multi_for_heroes(player_tag, previous_heroes, new_heroes) do
+  defp insert_queries_for_heroes(player_tag, new_heroes) do
     # Update player heroes and keep track of any change in heroes.
     # If there is a hero with the same `player_tag`, `name`, and `level`.
     # Only `updated_at` will be replaced. Else, add the new hero.
-    Enum.reduce(previous_heroes ++ new_heroes, Multi.new(), fn hero, acc ->
+    Enum.reduce(new_heroes, Multi.new(), fn hero, acc ->
       parsed_hero_name = hero.name |> String.replace(" ", "-") |> String.upcase()
       iteration = acc |> Multi.to_list() |> length()
       operation_name = "#{player_tag}_#{parsed_hero_name}_#{hero.level}_#{iteration}"
