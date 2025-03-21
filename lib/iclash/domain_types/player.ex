@@ -32,7 +32,7 @@ defmodule Iclash.DomainTypes.Player do
   @doc """
   Upsert a player.
   If the player does not exist in the database, it will be inserted.
-  If the player exists, it will be updated, keeping history of the Player Heroes.
+  If the player exists, it will be updated, keeping track of changes in Player Heroes.
   """
   @spec upsert_player(player :: Player.t()) ::
           {:ok, Player.t()} | {:error, any()} | Ecto.Multi.failure()
@@ -70,7 +70,7 @@ defmodule Iclash.DomainTypes.Player do
   end
 
   defp build_multi_for_heroes(player_tag, previous_heroes, new_heroes) do
-    # Update player heroes and keep history of any change in heroes.
+    # Update player heroes and keep track of any change in heroes.
     # If there is a hero with the same `player_tag`, `name`, and `level`.
     # Only `updated_at` will be replaced. Else, add the new hero.
     Enum.reduce(previous_heroes ++ new_heroes, Multi.new(), fn hero, acc ->
