@@ -6,9 +6,12 @@ defmodule Iclash.DomainTypes.Player do
 
   # TODO: Implement versioning on player and heroes records.
 
+  import Ecto.Query
+
   alias Ecto.Multi
   alias Iclash.Repo
   alias Iclash.Repo.Schemas.Player
+  alias Iclash.Repo.Schemas.Heroe
 
   require Logger
 
@@ -21,7 +24,8 @@ defmodule Iclash.DomainTypes.Player do
     result =
       Player
       |> Repo.get(tag)
-      |> Repo.preload(:heroes)
+      # This preload corresponds to the `preload_order` defined in the `Player` schema.
+      |> Repo.preload(heroes: from(h in Heroe, order_by: [asc: h.updated_at]))
 
     case result do
       nil -> {:error, :not_found}
