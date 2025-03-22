@@ -28,6 +28,18 @@ defmodule Iclash.DomainTypes.PlayerTest do
       }
     ]
 
+    hero_equipment = [
+      %{
+        player_tag: "#P1",
+        name: "HERO EQUIPMENT 1",
+        level: 50,
+        max_level: 100,
+        village: "home",
+        inserted_at: now,
+        updated_at: now
+      }
+    ]
+
     troops = [
       %{
         player_tag: "#P1",
@@ -64,6 +76,7 @@ defmodule Iclash.DomainTypes.PlayerTest do
         role: "admin",
         war_preference: "in",
         heroes: heroes,
+        hero_equipment: hero_equipment,
         troops: troops,
         spells: spells,
         inserted_at: now,
@@ -370,5 +383,90 @@ defmodule Iclash.DomainTypes.PlayerTest do
       assert spell_1.updated_at != updated_spell_1.updated_at
       assert spell_1.inserted_at == updated_spell_1.inserted_at
     end
+  end
+
+  test "keeps track of changes in player associated hero equipment", %{now: now, player: player} do
+    eigth_minutes_later = DateTime.add(now, 8, :minute)
+    new_he_name = "NEW HERO EQUIPMENT"
+
+    he_to_update = [
+      # New HE, now database shuold have 2 HE.
+      %{
+        player_tag: "#P1",
+        name: new_he_name,
+        level: 100,
+        max_level: 100,
+        village: "home",
+        inserted_at: eigth_minutes_later,
+        updated_at: eigth_minutes_later
+      },
+      # Update existing HE level, now database shuold have 3 HE.
+      # Keeping the previous record for this HE and persisting the updated one.
+      %{
+        player_tag: "#P1",
+        name: "HERO EQUIPMENT 1",
+        level: 100,
+        max_level: 100,
+        village: "home",
+        inserted_at: eigth_minutes_later,
+        updated_at: eigth_minutes_later
+      }
+    ]
+
+    # Workaround to append new HE into the player struct (defined in setup).
+    {:ok, player_to_update} =
+      player
+      |> PlayerSchema.to_map()
+      |> Map.put(:hero_equipment, he_to_update)
+      |> PlayerSchema.to_struct()
+
+    {:ok, player_from_db} = Player.upsert_player(player)
+    {:ok, updated_player} = Player.upsert_player(player_to_update)
+
+    # Assert 1 HE after initial player insertion.
+    assert length(player_from_db.hero_equipment) == 1
+    # Assert 3 records in DB. 1 existing HE, 1 new HE and 1 updated HE.
+    assert length(updated_player.hero_equipment) == 3
+    assert Enum.any?(updated_player.hero_equipment, fn he -> he.name == new_he_name end)
+  end
+
+  test "updates associated player hero equipment updated_at and keeps inserted_at", %{
+    now: now,
+    player: player
+  } do
+    eigth_minutes_later = DateTime.add(now, 8, :minute)
+
+    he_to_update = [
+      # When a data refresh is performed but, the HE data is the same.
+      # The record should be updated with the new timestamp.
+      # This record must be the same as the one in the setup (except for the timestamps).
+      %{
+        player_tag: "#P1",
+        name: "HERO EQUIPMENT 1",
+        level: 50,
+        max_level: 100,
+        village: "home",
+        inserted_at: eigth_minutes_later,
+        updated_at: eigth_minutes_later
+      }
+    ]
+
+    # Workaround to append new he into the player struct (defined in setup).
+    {:ok, player_to_update} =
+      player
+      |> PlayerSchema.to_map()
+      |> Map.put(:hero_equipment, he_to_update)
+      |> PlayerSchema.to_struct()
+
+    {:ok, player_from_db} = Player.upsert_player(player)
+    {:ok, updated_player} = Player.upsert_player(player_to_update)
+
+    he_1 = Enum.find(player_from_db.hero_equipment, fn he -> he.name == "HERO EQUIPMENT 1" end)
+
+    updated_he_1 =
+      Enum.find(updated_player.hero_equipment, fn he -> he.name == "HERO EQUIPMENT 1" end)
+
+    assert he_1.updated_at != updated_he_1.updated_at
+    assert he_1.inserted_at == updated_he_1.inserted_at
   end
 end

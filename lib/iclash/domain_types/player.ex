@@ -10,7 +10,7 @@ defmodule Iclash.DomainTypes.Player do
 
   alias Ecto.Multi
   alias Iclash.Repo
-  alias Iclash.Repo.Schemas.{Player, Heroe, Troop, Spell}
+  alias Iclash.Repo.Schemas.{Player, Heroe, Troop, Spell, HeroEquipment}
 
   require Logger
 
@@ -27,7 +27,8 @@ defmodule Iclash.DomainTypes.Player do
       |> Repo.preload(
         heroes: from(h in Heroe, order_by: [asc: h.updated_at]),
         troops: from(t in Troop, order_by: [asc: t.updated_at]),
-        spells: from(s in Spell, order_by: [asc: s.updated_at])
+        spells: from(s in Spell, order_by: [asc: s.updated_at]),
+        hero_equipment: from(he in HeroEquipment, order_by: [asc: he.updated_at])
       )
 
     case result do
@@ -49,6 +50,7 @@ defmodule Iclash.DomainTypes.Player do
     |> Multi.append(insert_queries_for_heroes(player.tag, player.heroes))
     |> Multi.append(insert_queries_for_troops(player.tag, player.troops))
     |> Multi.append(insert_queries_for_spells(player.tag, player.spells))
+    |> Multi.append(insert_queries_for_hero_equipment(player.tag, player.hero_equipment))
     |> Repo.transaction()
     |> case do
       {:ok, _transaction_result} ->
@@ -69,7 +71,8 @@ defmodule Iclash.DomainTypes.Player do
       player
       |> Map.put(:heroes, [])
       |> Map.put(:troops, [])
-      |> Map.put(:spells, []),
+      |> Map.put(:spells, [])
+      |> Map.put(:hero_equipment, []),
       on_conflict: {:replace_all_except, [:tag, :inserted_at]},
       conflict_target: [:tag]
     )
@@ -128,6 +131,26 @@ defmodule Iclash.DomainTypes.Player do
       |> Multi.insert(
         {:upsert_spell, operation_name},
         Map.put(spell, :player_tag, player_tag),
+        on_conflict: {:replace, [:updated_at]},
+        conflict_target: [:player_tag, :name, :level]
+      )
+      |> Multi.append(acc)
+    end)
+  end
+
+  defp insert_queries_for_hero_equipment(player_tag, new_hero_equipment) do
+    # Update player hero equipment and keep track of any change in hero equipment.
+    # If there is a hero equipment with the same `player_tag`, `name`, and `level`.
+    # Only `updated_at` will be replaced. Else, add the new hero equipment.
+    Enum.reduce(new_hero_equipment, Multi.new(), fn he, acc ->
+      parsed_he_name = he.name |> String.replace(" ", "-") |> String.upcase()
+      iteration = acc |> Multi.to_list() |> length()
+      operation_name = "#{player_tag}_#{parsed_he_name}_#{he.level}_#{iteration}"
+
+      Multi.new()
+      |> Multi.insert(
+        {:upsert_hero_equipment, operation_name},
+        Map.put(he, :player_tag, player_tag),
         on_conflict: {:replace, [:updated_at]},
         conflict_target: [:player_tag, :name, :level]
       )

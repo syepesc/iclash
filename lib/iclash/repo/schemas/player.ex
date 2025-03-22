@@ -5,7 +5,7 @@ defmodule Iclash.Repo.Schemas.Player do
   import Ecto.Changeset
 
   alias Iclash.Repo.Enums.{ClanRole, WarPreference}
-  alias Iclash.Repo.Schemas.{Heroe, Troop, Spell}
+  alias Iclash.Repo.Schemas.{Heroe, Troop, Spell, HeroEquipment}
   alias Iclash.Utils.StructUtils
 
   require Logger
@@ -50,6 +50,14 @@ defmodule Iclash.Repo.Schemas.Player do
       preload_order: [asc: :updated_at]
 
     # The `:on_delete` behaviour MUST be defined in the assoc migration using: references().
+    has_many :hero_equipment, HeroEquipment,
+      foreign_key: :player_tag,
+      references: :tag,
+      on_replace: :delete_if_exists,
+      # This preload order is used in the `Player.get_player()` function.
+      preload_order: [asc: :updated_at]
+
+    # The `:on_delete` behaviour MUST be defined in the assoc migration using: references().
     has_many :troops, Troop,
       foreign_key: :player_tag,
       references: :tag,
@@ -73,6 +81,7 @@ defmodule Iclash.Repo.Schemas.Player do
     |> cast_assoc(:heroes, with: &Heroe.changeset/2)
     |> cast_assoc(:troops, with: &Troop.changeset/2)
     |> cast_assoc(:spells, with: &Spell.changeset/2)
+    |> cast_assoc(:hero_equipment, with: &HeroEquipment.changeset/2)
     |> validate_required(@requiered_fields)
     |> unique_constraint([:tag], message: "Tag must be unique.")
     |> validate_format(:tag, @starts_with_hash, message: "Tag must start with '#'.")
