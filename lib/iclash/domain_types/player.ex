@@ -67,7 +67,7 @@ defmodule Iclash.DomainTypes.Player do
     Multi.new()
     |> Multi.insert(
       {:upsert_player, player.tag},
-      # Remove heroes, troops, and spells to handle them sepparately.
+      # Remove heroes, troops, spells, and hero equipment to handle them sepparately.
       player
       |> Map.put(:heroes, [])
       |> Map.put(:troops, [])
