@@ -10,8 +10,7 @@ defmodule Iclash.DomainTypes.Player do
 
   alias Ecto.Multi
   alias Iclash.Repo
-  alias Iclash.Repo.Schemas.Player
-  alias Iclash.Repo.Schemas.Heroe
+  alias Iclash.Repo.Schemas.{Player, Heroe, Troop, Spell}
 
   require Logger
 
@@ -25,7 +24,11 @@ defmodule Iclash.DomainTypes.Player do
       Player
       |> Repo.get(tag)
       # This preload corresponds to the `preload_order` defined in the `Player` schema.
-      |> Repo.preload(heroes: from(h in Heroe, order_by: [asc: h.updated_at]))
+      |> Repo.preload(
+        heroes: from(h in Heroe, order_by: [asc: h.updated_at]),
+        troops: from(t in Troop, order_by: [asc: t.updated_at]),
+        spells: from(s in Spell, order_by: [asc: s.updated_at])
+      )
 
     case result do
       nil -> {:error, :not_found}
@@ -44,6 +47,8 @@ defmodule Iclash.DomainTypes.Player do
     Multi.new()
     |> Multi.append(insert_query_for_player(player))
     |> Multi.append(insert_queries_for_heroes(player.tag, player.heroes))
+    |> Multi.append(insert_queries_for_troops(player.tag, player.troops))
+    |> Multi.append(insert_queries_for_spells(player.tag, player.spells))
     |> Repo.transaction()
     |> case do
       {:ok, _transaction_result} ->
@@ -60,8 +65,11 @@ defmodule Iclash.DomainTypes.Player do
     Multi.new()
     |> Multi.insert(
       {:upsert_player, player.tag},
-      # Remove heroes to handle them sepparately.
-      Map.put(player, :heroes, []),
+      # Remove heroes, troops, and spells to handle them sepparately.
+      player
+      |> Map.put(:heroes, [])
+      |> Map.put(:troops, [])
+      |> Map.put(:spells, []),
       on_conflict: {:replace_all_except, [:tag, :inserted_at]},
       conflict_target: [:tag]
     )
@@ -80,6 +88,46 @@ defmodule Iclash.DomainTypes.Player do
       |> Multi.insert(
         {:upsert_heroe, operation_name},
         Map.put(hero, :player_tag, player_tag),
+        on_conflict: {:replace, [:updated_at]},
+        conflict_target: [:player_tag, :name, :level]
+      )
+      |> Multi.append(acc)
+    end)
+  end
+
+  defp insert_queries_for_troops(player_tag, new_troops) do
+    # Update player troops and keep track of any change in troops.
+    # If there is a troop with the same `player_tag`, `name`, and `level`.
+    # Only `updated_at` will be replaced. Else, add the new troop.
+    Enum.reduce(new_troops, Multi.new(), fn troop, acc ->
+      parsed_spell_name = troop.name |> String.replace(" ", "-") |> String.upcase()
+      iteration = acc |> Multi.to_list() |> length()
+      operation_name = "#{player_tag}_#{parsed_spell_name}_#{troop.level}_#{iteration}"
+
+      Multi.new()
+      |> Multi.insert(
+        {:upsert_troop, operation_name},
+        Map.put(troop, :player_tag, player_tag),
+        on_conflict: {:replace, [:updated_at]},
+        conflict_target: [:player_tag, :name, :level]
+      )
+      |> Multi.append(acc)
+    end)
+  end
+
+  defp insert_queries_for_spells(player_tag, new_spells) do
+    # Update player spells and keep track of any change in spells.
+    # If there is a spell with the same `player_tag`, `name`, and `level`.
+    # Only `updated_at` will be replaced. Else, add the new spell.
+    Enum.reduce(new_spells, Multi.new(), fn spell, acc ->
+      parsed_spell_name = spell.name |> String.replace(" ", "-") |> String.upcase()
+      iteration = acc |> Multi.to_list() |> length()
+      operation_name = "#{player_tag}_#{parsed_spell_name}_#{spell.level}_#{iteration}"
+
+      Multi.new()
+      |> Multi.insert(
+        {:upsert_spell, operation_name},
+        Map.put(spell, :player_tag, player_tag),
         on_conflict: {:replace, [:updated_at]},
         conflict_target: [:player_tag, :name, :level]
       )

@@ -54,12 +54,14 @@ defmodule Iclash.Repo.Schemas.Player do
       foreign_key: :player_tag,
       references: :tag,
       on_replace: :delete_if_exists,
+      # This preload order is used in the `Player.get_player()` function.
       preload_order: [asc: :updated_at]
 
     has_many :spells, Spell,
       foreign_key: :player_tag,
       references: :tag,
       on_replace: :delete_if_exists,
+      # This preload order is used in the `Player.get_player()` function.
       preload_order: [asc: :updated_at]
 
     timestamps(type: :utc_datetime_usec)
