@@ -49,25 +49,25 @@ defmodule Iclash.DomainTypes.PlayerTest do
   end
 
   describe "get_player/1" do
-    test "Gets a player and return player struct", %{player: player} do
+    test "gets a player and return player struct", %{player: player} do
       {:ok, inserted_player} = Player.upsert_player(player)
       player_form_db = Player.get_player(player.tag)
       assert inserted_player == player_form_db
     end
 
-    test "Gets a player and return error tuple if not found", %{player: player} do
+    test "gets a player and return error tuple if not found", %{player: player} do
       result = Player.get_player(player.tag)
       assert result == {:error, :not_found}
     end
   end
 
   describe "upsert_player/1" do
-    test "Creates a player", %{player: player} do
+    test "creates a player", %{player: player} do
       {:ok, player_form_db} = Player.upsert_player(player)
       assert player_form_db == Player.get_player(player.tag)
     end
 
-    test "Updates a player", %{player: player} do
+    test "updates a player", %{player: player} do
       new_name = "NEW NAME"
       updated_player = Map.put(player, :name, new_name)
 
@@ -77,7 +77,7 @@ defmodule Iclash.DomainTypes.PlayerTest do
       assert updated_player_from_db.name == new_name
     end
 
-    test "Updates a player, change updated_at and keeps inserted_at", %{player: player} do
+    test "updates a player, change updated_at and keeps inserted_at", %{player: player} do
       new_name = "NEW NAME"
       # Instead of keeping the fixed timestamps from the player passed through the setup function,
       # the timestamps should be set to nil to let Ecto handle them internally.
@@ -94,7 +94,7 @@ defmodule Iclash.DomainTypes.PlayerTest do
       assert player_from_db.inserted_at == updated_player_from_db.inserted_at
     end
 
-    test "Updates a player heroes association", %{player: player} do
+    test "updates player associated heroes", %{player: player} do
       new_hero_name = "NEW NAME"
       updated_heroe = Map.put(hd(player.heroes), :name, new_hero_name)
       updated_player = Map.put(player, :heroes, [updated_heroe])
@@ -108,7 +108,7 @@ defmodule Iclash.DomainTypes.PlayerTest do
                Map.drop(hd(updated_player_from_db.heroes), [:name])
     end
 
-    test "Updating a player heroes association change updated_at and keeps inserted_at", %{
+    test "updates player associated heroes updated_at and keeps inserted_at", %{
       player: player
     } do
       new_hero_name = "NEW NAME"
@@ -132,7 +132,7 @@ defmodule Iclash.DomainTypes.PlayerTest do
                hd(updated_player_from_db.heroes).inserted_at
     end
 
-    test "Keeps track of changes in player heroes", %{now: now, player: player} do
+    test "keeps track of changes in player heroes", %{now: now, player: player} do
       new_heroes = [
         # New hero, now database shuold have 3 heroes.
         %{
