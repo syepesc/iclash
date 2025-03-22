@@ -80,7 +80,9 @@ defmodule Iclash.DomainTypes.PlayerTest do
         troops: troops,
         spells: spells,
         inserted_at: now,
-        updated_at: now
+        updated_at: now,
+        war_stars: 10,
+        exp_level: 100
       }
       |> PlayerSchema.to_struct()
 

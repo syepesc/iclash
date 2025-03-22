@@ -24,8 +24,10 @@ defmodule Iclash.Repo.Schemas.Player do
     :trophies,
     :town_hall_level,
     :best_trophies,
+    :war_stars,
     :attack_wins,
     :defense_wins,
+    :exp_level,
     :role,
     :war_preference
   ]
@@ -33,11 +35,13 @@ defmodule Iclash.Repo.Schemas.Player do
   @primary_key {:tag, :string, []}
   schema "players" do
     field :name, :string
-    field :trophies, :integer
     field :town_hall_level, :integer
+    field :trophies, :integer
     field :best_trophies, :integer
+    field :war_stars, :integer
     field :attack_wins, :integer
     field :defense_wins, :integer
+    field :exp_level, :integer
     field :role, ClanRole
     field :war_preference, WarPreference
 
@@ -71,6 +75,9 @@ defmodule Iclash.Repo.Schemas.Player do
       on_replace: :delete_if_exists,
       # This preload order is used in the `Player.get_player()` function.
       preload_order: [asc: :updated_at]
+
+    # TODO: implement the following assocs: `clan`, `
+    # clan
 
     timestamps(type: :utc_datetime_usec)
   end

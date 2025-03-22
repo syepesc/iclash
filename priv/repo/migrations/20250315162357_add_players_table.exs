@@ -11,8 +11,10 @@ defmodule Iclash.Repo.Migrations.AddPlayersTable do
         add :trophies, :integer, null: false
         add :town_hall_level, :integer, null: false
         add :best_trophies, :integer, null: false
+        add :war_stars, :integer, null: false
         add :attack_wins, :integer, null: false
         add :defense_wins, :integer, null: false
+        add :exp_level, :integer, null: false
         add :role, :string, null: false
         add :war_preference, :string, null: false
 
