@@ -7,7 +7,7 @@ defmodule Iclash.DomainTypes.PlayerTest do
   setup do
     now = ~U[2025-08-08 12:00:00.000000Z]
 
-    heroes_map = [
+    heroes = [
       %{
         player_tag: "#P1",
         name: "HERO 1",
@@ -28,6 +28,30 @@ defmodule Iclash.DomainTypes.PlayerTest do
       }
     ]
 
+    troops = [
+      %{
+        player_tag: "#P1",
+        name: "TROOP 1",
+        level: 50,
+        max_level: 100,
+        village: "home",
+        inserted_at: now,
+        updated_at: now
+      }
+    ]
+
+    spells = [
+      %{
+        player_tag: "#P1",
+        name: "SPELL 1",
+        level: 50,
+        max_level: 100,
+        village: "home",
+        inserted_at: now,
+        updated_at: now
+      }
+    ]
+
     {:ok, player} =
       %{
         tag: "#P1",
@@ -39,7 +63,9 @@ defmodule Iclash.DomainTypes.PlayerTest do
         defense_wins: 10,
         role: "admin",
         war_preference: "in",
-        heroes: heroes_map,
+        heroes: heroes,
+        troops: troops,
+        spells: spells,
         inserted_at: now,
         updated_at: now
       }
@@ -72,12 +98,12 @@ defmodule Iclash.DomainTypes.PlayerTest do
       updated_player = Map.put(player, :name, new_name)
 
       {:ok, _player_from_db} = Player.upsert_player(player)
-      {:ok, updated_player_from_db} = Player.upsert_player(updated_player)
+      {:ok, updated_player} = Player.upsert_player(updated_player)
 
-      assert updated_player_from_db.name == new_name
+      assert updated_player.name == new_name
     end
 
-    test "updates a player, change updated_at and keeps inserted_at", %{player: player} do
+    test "updates a player updated_at and keeps inserted_at", %{player: player} do
       new_name = "NEW NAME"
       # Instead of keeping the fixed timestamps from the player passed through the setup function,
       # the timestamps should be set to nil to let Ecto handle them internally.
@@ -88,87 +114,261 @@ defmodule Iclash.DomainTypes.PlayerTest do
         |> Map.put(:insterted_at, nil)
 
       {:ok, player_from_db} = Player.upsert_player(player)
-      {:ok, updated_player_from_db} = Player.upsert_player(updated_player)
+      {:ok, updated_player} = Player.upsert_player(updated_player)
 
-      assert player_from_db.updated_at != updated_player_from_db.updated_at
-      assert player_from_db.inserted_at == updated_player_from_db.inserted_at
+      assert player_from_db.updated_at != updated_player.updated_at
+      assert player_from_db.inserted_at == updated_player.inserted_at
     end
 
-    test "updates player associated heroes", %{player: player} do
-      new_hero_name = "NEW NAME"
-      updated_heroe = Map.put(hd(player.heroes), :name, new_hero_name)
-      updated_player = Map.put(player, :heroes, [updated_heroe])
+    test "keeps track of changes in player associated heroes", %{now: now, player: player} do
+      eigth_minutes_later = DateTime.add(now, 8, :minute)
+      new_hero_name = "NEW HERO"
 
-      {:ok, player_from_db} = Player.upsert_player(player)
-      {:ok, updated_player_from_db} = Player.upsert_player(updated_player)
-
-      assert Enum.any?(updated_player_from_db.heroes, fn h -> h.name == new_hero_name end)
-
-      assert Map.drop(hd(player_from_db.heroes), [:name]) ==
-               Map.drop(hd(updated_player_from_db.heroes), [:name])
-    end
-
-    test "updates player associated heroes updated_at and keeps inserted_at", %{
-      player: player
-    } do
-      new_hero_name = "NEW NAME"
-      # Instead of keeping the fixed timestamps from the player passed through the setup function,
-      # the timestamps should be set to nil to let Ecto handle them internally.
-      updated_heroe =
-        player.heroes
-        |> hd()
-        |> Map.put(:name, new_hero_name)
-        |> Map.put(:updated_at, nil)
-        |> Map.put(:insterted_at, nil)
-
-      updated_player = Map.put(player, :heroes, [updated_heroe])
-
-      {:ok, player_from_db} = Player.upsert_player(player)
-      {:ok, updated_player_from_db} = Player.upsert_player(updated_player)
-
-      assert hd(player_from_db.heroes).updated_at != hd(updated_player_from_db.heroes).updated_at
-
-      assert hd(player_from_db.heroes).inserted_at ==
-               hd(updated_player_from_db.heroes).inserted_at
-    end
-
-    test "keeps track of changes in player heroes", %{now: now, player: player} do
-      new_heroes = [
+      heroes_to_update = [
         # New hero, now database shuold have 3 heroes.
         %{
           player_tag: "#P1",
-          name: "HERO 3",
+          name: new_hero_name,
           level: 100,
           max_level: 100,
           village: "home",
-          inserted_at: DateTime.add(now, 8, :minute),
-          updated_at: DateTime.add(now, 8, :minute)
+          inserted_at: eigth_minutes_later,
+          updated_at: eigth_minutes_later
         },
-        # Update existing hero level, now database shuold have 4 heroes counting the previous record for this hero.
+        # Update existing hero level, now database shuold have 4 heroes.
+        # Keeping the previous record for this hero and persisting the updated one.
         %{
           player_tag: "#P1",
-          name: "HERO 2",
+          name: "HERO 1",
           level: 100,
           max_level: 100,
           village: "home",
-          inserted_at: DateTime.add(now, 8, :minute),
-          updated_at: DateTime.add(now, 8, :minute)
+          inserted_at: eigth_minutes_later,
+          updated_at: eigth_minutes_later
         }
       ]
 
-      {:ok, new_player} =
+      # Workaround to append new heroes into the player struct (defined in setup).
+      {:ok, player_to_update} =
         player
         |> PlayerSchema.to_map()
-        |> Map.put(:heroes, new_heroes)
+        |> Map.put(:heroes, heroes_to_update)
         |> PlayerSchema.to_struct()
 
       {:ok, player_from_db} = Player.upsert_player(player)
-      {:ok, updated_player_from_db} = Player.upsert_player(new_player)
+      {:ok, updated_player} = Player.upsert_player(player_to_update)
 
-      # There should be 2 heroes after inserting the player.
+      # Assert 2 heroes after initial player insertion.
       assert length(player_from_db.heroes) == 2
-      # There should be 4 after updating. 2 existing heroes, 1 new hero and 1 updated hero.
-      assert length(updated_player_from_db.heroes) == 4
+      # Assert 4 records in DB. 2 existing heroes, 1 new hero and 1 updated hero.
+      assert length(updated_player.heroes) == 4
+      assert Enum.any?(updated_player.heroes, fn hero -> hero.name == new_hero_name end)
+    end
+
+    test "updates associated player heroes updated_at and keeps inserted_at", %{
+      now: now,
+      player: player
+    } do
+      eigth_minutes_later = DateTime.add(now, 8, :minute)
+
+      heroes_to_update = [
+        # When a data refresh is performed but, the heroes data is the same.
+        # The record should be updated with the new timestamp.
+        # This record must be the same as the one in the setup (except for the timestamps).
+        %{
+          player_tag: "#P1",
+          name: "HERO 1",
+          level: 50,
+          max_level: 100,
+          village: "home",
+          inserted_at: eigth_minutes_later,
+          updated_at: eigth_minutes_later
+        }
+      ]
+
+      # Workaround to append new heroes into the player struct (defined in setup).
+      {:ok, player_to_update} =
+        player
+        |> PlayerSchema.to_map()
+        |> Map.put(:heroes, heroes_to_update)
+        |> PlayerSchema.to_struct()
+
+      {:ok, player_from_db} = Player.upsert_player(player)
+      {:ok, updated_player} = Player.upsert_player(player_to_update)
+
+      hero_1 = Enum.find(player_from_db.heroes, fn hero -> hero.name == "HERO 1" end)
+      updated_hero_1 = Enum.find(updated_player.heroes, fn hero -> hero.name == "HERO 1" end)
+
+      assert hero_1.updated_at != updated_hero_1.updated_at
+      assert hero_1.inserted_at == updated_hero_1.inserted_at
+    end
+
+    test "keeps track of changes in player associated troops", %{now: now, player: player} do
+      eigth_minutes_later = DateTime.add(now, 8, :minute)
+      new_troop_name = "NEW TROOP"
+
+      troops_to_update = [
+        # New troop, now database shuold have 2 troops.
+        %{
+          player_tag: "#P1",
+          name: new_troop_name,
+          level: 100,
+          max_level: 100,
+          village: "home",
+          inserted_at: eigth_minutes_later,
+          updated_at: eigth_minutes_later
+        },
+        # Update existing troop level, now database shuold have 3 troops.
+        # Keeping the previous record for this troop and persisting the updated one.
+        %{
+          player_tag: "#P1",
+          name: "TROOP 1",
+          level: 100,
+          max_level: 100,
+          village: "home",
+          inserted_at: eigth_minutes_later,
+          updated_at: eigth_minutes_later
+        }
+      ]
+
+      # Workaround to append new troops into the player struct (defined in setup).
+      {:ok, player_to_update} =
+        player
+        |> PlayerSchema.to_map()
+        |> Map.put(:troops, troops_to_update)
+        |> PlayerSchema.to_struct()
+
+      {:ok, player_from_db} = Player.upsert_player(player)
+      {:ok, updated_player} = Player.upsert_player(player_to_update)
+
+      # Assert 1 troop after initial player insertion.
+      assert length(player_from_db.troops) == 1
+      # Assert 3 records in DB. 1 existing troop, 1 new troop and 1 updated troop.
+      assert length(updated_player.troops) == 3
+      assert Enum.any?(updated_player.troops, fn troop -> troop.name == new_troop_name end)
+    end
+
+    test "updates associated player troops updated_at and keeps inserted_at", %{
+      now: now,
+      player: player
+    } do
+      eigth_minutes_later = DateTime.add(now, 8, :minute)
+
+      troops_to_update = [
+        # When a data refresh is performed but, the troop data is the same.
+        # The record should be updated with the new timestamp.
+        # This record must be the same as the one in the setup (except for the timestamps).
+        %{
+          player_tag: "#P1",
+          name: "TROOP 1",
+          level: 50,
+          max_level: 100,
+          village: "home",
+          inserted_at: eigth_minutes_later,
+          updated_at: eigth_minutes_later
+        }
+      ]
+
+      # Workaround to append new troops into the player struct (defined in setup).
+      {:ok, player_to_update} =
+        player
+        |> PlayerSchema.to_map()
+        |> Map.put(:troops, troops_to_update)
+        |> PlayerSchema.to_struct()
+
+      {:ok, player_from_db} = Player.upsert_player(player)
+
+      {:ok, updated_player} =
+        Player.upsert_player(player_to_update)
+
+      troop_1 = Enum.find(player_from_db.troops, fn troop -> troop.name == "TROOP 1" end)
+      updated_troop_1 = Enum.find(updated_player.troops, fn troop -> troop.name == "TROOP 1" end)
+
+      assert troop_1.updated_at != updated_troop_1.updated_at
+      assert troop_1.inserted_at == updated_troop_1.inserted_at
+    end
+
+    test "keeps track of changes in player associated spells", %{now: now, player: player} do
+      eigth_minutes_later = DateTime.add(now, 8, :minute)
+      new_spell_name = "NEW SPELL"
+
+      spells_to_update = [
+        # New spell, now database shuold have 2 spells.
+        %{
+          player_tag: "#P1",
+          name: new_spell_name,
+          level: 100,
+          max_level: 100,
+          village: "home",
+          inserted_at: eigth_minutes_later,
+          updated_at: eigth_minutes_later
+        },
+        # Update existing spell level, now database shuold have 3 spells.
+        # Keeping the previous record for this spell and persisting the updated one.
+        %{
+          player_tag: "#P1",
+          name: "SPELL 1",
+          level: 100,
+          max_level: 100,
+          village: "home",
+          inserted_at: eigth_minutes_later,
+          updated_at: eigth_minutes_later
+        }
+      ]
+
+      # Workaround to append new spells into the player struct (defined in setup).
+      {:ok, player_to_update} =
+        player
+        |> PlayerSchema.to_map()
+        |> Map.put(:spells, spells_to_update)
+        |> PlayerSchema.to_struct()
+
+      {:ok, player_from_db} = Player.upsert_player(player)
+      {:ok, updated_player} = Player.upsert_player(player_to_update)
+
+      # Assert 1 spell after initial player insertion.
+      assert length(player_from_db.spells) == 1
+      # Assert 3 records in DB. 1 existing spell, 1 new spell and 1 updated spell.
+      assert length(updated_player.spells) == 3
+      assert Enum.any?(updated_player.spells, fn spell -> spell.name == new_spell_name end)
+    end
+
+    test "updates associated player spells updated_at and keeps inserted_at", %{
+      now: now,
+      player: player
+    } do
+      eigth_minutes_later = DateTime.add(now, 8, :minute)
+
+      spells_to_update = [
+        # When a data refresh is performed but, the spell data is the same.
+        # The record should be updated with the new timestamp.
+        # This record must be the same as the one in the setup (except for the timestamps).
+        %{
+          player_tag: "#P1",
+          name: "SPELL 1",
+          level: 50,
+          max_level: 100,
+          village: "home",
+          inserted_at: eigth_minutes_later,
+          updated_at: eigth_minutes_later
+        }
+      ]
+
+      # Workaround to append new spells into the player struct (defined in setup).
+      {:ok, player_to_update} =
+        player
+        |> PlayerSchema.to_map()
+        |> Map.put(:spells, spells_to_update)
+        |> PlayerSchema.to_struct()
+
+      {:ok, player_from_db} = Player.upsert_player(player)
+      {:ok, updated_player} = Player.upsert_player(player_to_update)
+
+      spell_1 = Enum.find(player_from_db.spells, fn spell -> spell.name == "SPELL 1" end)
+      updated_spell_1 = Enum.find(updated_player.spells, fn spell -> spell.name == "SPELL 1" end)
+
+      assert spell_1.updated_at != updated_spell_1.updated_at
+      assert spell_1.inserted_at == updated_spell_1.inserted_at
     end
   end
 end
