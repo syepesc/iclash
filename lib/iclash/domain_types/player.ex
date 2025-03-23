@@ -15,8 +15,7 @@ defmodule Iclash.DomainTypes.Player do
   require Logger
 
   @doc """
-  Get a player by tag.
-  If the player is not found in the database, it will fetch it from the Clash API.
+  Get a player by tag, with all its preloads.
   """
   @spec get_player(tag :: String.t()) :: Player.t() | {:error, :not_found}
   def get_player(tag) do
