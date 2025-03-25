@@ -10,7 +10,7 @@ defmodule Iclash.DomainTypes.Player do
 
   alias Ecto.Multi
   alias Iclash.Repo
-  alias Iclash.Repo.Schemas.{Player, Heroe, Troop, Spell, HeroEquipment}
+  alias Iclash.Repo.Schemas.{Player, Heroe, Troop, Spell, HeroEquipment, LegendStatistic}
 
   require Logger
 
@@ -27,7 +27,8 @@ defmodule Iclash.DomainTypes.Player do
         heroes: from(h in Heroe, order_by: [asc: h.updated_at]),
         troops: from(t in Troop, order_by: [asc: t.updated_at]),
         spells: from(s in Spell, order_by: [asc: s.updated_at]),
-        hero_equipment: from(he in HeroEquipment, order_by: [asc: he.updated_at])
+        hero_equipment: from(he in HeroEquipment, order_by: [asc: he.updated_at]),
+        legend_statistics: from(lsr in LegendStatistic, order_by: [asc: lsr.updated_at])
       )
 
     case result do
@@ -50,6 +51,7 @@ defmodule Iclash.DomainTypes.Player do
     |> Multi.append(insert_queries_for_troops(player.tag, player.troops))
     |> Multi.append(insert_queries_for_spells(player.tag, player.spells))
     |> Multi.append(insert_queries_for_hero_equipment(player.tag, player.hero_equipment))
+    |> Multi.append(insert_queries_for_legend_statistics(player.tag, player.legend_statistics))
     |> Repo.transaction()
     |> case do
       {:ok, _transaction_result} ->
@@ -66,19 +68,21 @@ defmodule Iclash.DomainTypes.Player do
     Multi.new()
     |> Multi.insert(
       {:upsert_player, player.tag},
-      # Remove heroes, troops, spells, and hero equipment to handle them sepparately.
+      # Remove heroes, troops, spells, hero equipment, and
+      # legend_statistics to handle them sepparately.
       player
       |> Map.put(:heroes, [])
       |> Map.put(:troops, [])
       |> Map.put(:spells, [])
-      |> Map.put(:hero_equipment, []),
+      |> Map.put(:hero_equipment, [])
+      |> Map.put(:legend_statistics, []),
       on_conflict: {:replace_all_except, [:tag, :inserted_at]},
       conflict_target: [:tag]
     )
   end
 
   defp insert_queries_for_heroes(player_tag, new_heroes) do
-    # Update player heroes and keep track of any change in heroes.
+    # Update player heroes and keep track of any change.
     # If there is a hero with the same `player_tag`, `name`, and `level`.
     # Only `updated_at` will be replaced. Else, add the new hero.
     Enum.reduce(new_heroes, Multi.new(), fn hero, acc ->
@@ -90,7 +94,7 @@ defmodule Iclash.DomainTypes.Player do
       |> Multi.insert(
         {:upsert_heroe, operation_name},
         Map.put(hero, :player_tag, player_tag),
-        on_conflict: {:replace, [:updated_at]},
+        on_conflict: {:replace_all_except, [:player_tag, :name, :level, :inserted_at]},
         conflict_target: [:player_tag, :name, :level]
       )
       |> Multi.append(acc)
@@ -98,7 +102,7 @@ defmodule Iclash.DomainTypes.Player do
   end
 
   defp insert_queries_for_troops(player_tag, new_troops) do
-    # Update player troops and keep track of any change in troops.
+    # Update player troops and keep track of any change.
     # If there is a troop with the same `player_tag`, `name`, and `level`.
     # Only `updated_at` will be replaced. Else, add the new troop.
     Enum.reduce(new_troops, Multi.new(), fn troop, acc ->
@@ -110,7 +114,7 @@ defmodule Iclash.DomainTypes.Player do
       |> Multi.insert(
         {:upsert_troop, operation_name},
         Map.put(troop, :player_tag, player_tag),
-        on_conflict: {:replace, [:updated_at]},
+        on_conflict: {:replace_all_except, [:player_tag, :name, :level, :inserted_at]},
         conflict_target: [:player_tag, :name, :level]
       )
       |> Multi.append(acc)
@@ -118,7 +122,7 @@ defmodule Iclash.DomainTypes.Player do
   end
 
   defp insert_queries_for_spells(player_tag, new_spells) do
-    # Update player spells and keep track of any change in spells.
+    # Update player spells and keep track of any change.
     # If there is a spell with the same `player_tag`, `name`, and `level`.
     # Only `updated_at` will be replaced. Else, add the new spell.
     Enum.reduce(new_spells, Multi.new(), fn spell, acc ->
@@ -130,7 +134,7 @@ defmodule Iclash.DomainTypes.Player do
       |> Multi.insert(
         {:upsert_spell, operation_name},
         Map.put(spell, :player_tag, player_tag),
-        on_conflict: {:replace, [:updated_at]},
+        on_conflict: {:replace_all_except, [:player_tag, :name, :level, :inserted_at]},
         conflict_target: [:player_tag, :name, :level]
       )
       |> Multi.append(acc)
@@ -138,7 +142,7 @@ defmodule Iclash.DomainTypes.Player do
   end
 
   defp insert_queries_for_hero_equipment(player_tag, new_hero_equipment) do
-    # Update player hero equipment and keep track of any change in hero equipment.
+    # Update player hero equipment and keep track of any change.
     # If there is a hero equipment with the same `player_tag`, `name`, and `level`.
     # Only `updated_at` will be replaced. Else, add the new hero equipment.
     Enum.reduce(new_hero_equipment, Multi.new(), fn he, acc ->
@@ -150,8 +154,27 @@ defmodule Iclash.DomainTypes.Player do
       |> Multi.insert(
         {:upsert_hero_equipment, operation_name},
         Map.put(he, :player_tag, player_tag),
-        on_conflict: {:replace, [:updated_at]},
+        on_conflict: {:replace_all_except, [:player_tag, :name, :level, :inserted_at]},
         conflict_target: [:player_tag, :name, :level]
+      )
+      |> Multi.append(acc)
+    end)
+  end
+
+  defp insert_queries_for_legend_statistics(player_tag, new_legend_statistics) do
+    # Update player legend statistics and keep track of any change.
+    # If there is a hero equipment with the same `player_tag`, `name`, and `level`.
+    # Only `updated_at` will be replaced. Else, add the new hero equipment.
+    Enum.reduce(new_legend_statistics, Multi.new(), fn ls, acc ->
+      iteration = acc |> Multi.to_list() |> length()
+      operation_name = "#{player_tag}_#{ls.id}_#{iteration}"
+
+      Multi.new()
+      |> Multi.insert(
+        {:upsert_legend_statistic, operation_name},
+        Map.put(ls, :player_tag, player_tag),
+        on_conflict: {:replace_all_except, [:player_tag, :id, :inserted_at]},
+        conflict_target: [:player_tag, :id]
       )
       |> Multi.append(acc)
     end)
