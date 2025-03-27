@@ -37,8 +37,7 @@ defmodule Iclash.ClashApi.ClientImpl do
 
     body
     |> transform_legend_statistics()
-    |> IO.inspect(limit: :infinity)
-    |> Player.to_struct()
+    |> Player.from_map()
   end
 
   defp api_token, do: Application.fetch_env!(:iclash, ClashApiConfig)[:api_token]

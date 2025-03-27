@@ -95,7 +95,7 @@ defmodule Iclash.DomainTypes.PlayerTest do
         inserted_at: now,
         updated_at: now
       }
-      |> PlayerSchema.to_struct()
+      |> PlayerSchema.from_map()
 
     %{now: now, player: player}
   end
@@ -179,7 +179,7 @@ defmodule Iclash.DomainTypes.PlayerTest do
         player
         |> PlayerSchema.to_map()
         |> Map.put(:heroes, heroes_to_update)
-        |> PlayerSchema.to_struct()
+        |> PlayerSchema.from_map()
 
       {:ok, player_from_db} = Player.upsert_player(player)
       {:ok, updated_player} = Player.upsert_player(player_to_update)
@@ -217,7 +217,7 @@ defmodule Iclash.DomainTypes.PlayerTest do
         player
         |> PlayerSchema.to_map()
         |> Map.put(:heroes, heroes_to_update)
-        |> PlayerSchema.to_struct()
+        |> PlayerSchema.from_map()
 
       {:ok, player_from_db} = Player.upsert_player(player)
       {:ok, updated_player} = Player.upsert_player(player_to_update)
@@ -262,7 +262,7 @@ defmodule Iclash.DomainTypes.PlayerTest do
         player
         |> PlayerSchema.to_map()
         |> Map.put(:troops, troops_to_update)
-        |> PlayerSchema.to_struct()
+        |> PlayerSchema.from_map()
 
       {:ok, player_from_db} = Player.upsert_player(player)
       {:ok, updated_player} = Player.upsert_player(player_to_update)
@@ -300,7 +300,7 @@ defmodule Iclash.DomainTypes.PlayerTest do
         player
         |> PlayerSchema.to_map()
         |> Map.put(:troops, troops_to_update)
-        |> PlayerSchema.to_struct()
+        |> PlayerSchema.from_map()
 
       {:ok, player_from_db} = Player.upsert_player(player)
 
@@ -347,7 +347,7 @@ defmodule Iclash.DomainTypes.PlayerTest do
         player
         |> PlayerSchema.to_map()
         |> Map.put(:spells, spells_to_update)
-        |> PlayerSchema.to_struct()
+        |> PlayerSchema.from_map()
 
       {:ok, player_from_db} = Player.upsert_player(player)
       {:ok, updated_player} = Player.upsert_player(player_to_update)
@@ -385,7 +385,7 @@ defmodule Iclash.DomainTypes.PlayerTest do
         player
         |> PlayerSchema.to_map()
         |> Map.put(:spells, spells_to_update)
-        |> PlayerSchema.to_struct()
+        |> PlayerSchema.from_map()
 
       {:ok, player_from_db} = Player.upsert_player(player)
       {:ok, updated_player} = Player.upsert_player(player_to_update)
@@ -431,7 +431,7 @@ defmodule Iclash.DomainTypes.PlayerTest do
       player
       |> PlayerSchema.to_map()
       |> Map.put(:hero_equipment, he_to_update)
-      |> PlayerSchema.to_struct()
+      |> PlayerSchema.from_map()
 
     {:ok, player_from_db} = Player.upsert_player(player)
     {:ok, updated_player} = Player.upsert_player(player_to_update)
@@ -469,7 +469,7 @@ defmodule Iclash.DomainTypes.PlayerTest do
       player
       |> PlayerSchema.to_map()
       |> Map.put(:hero_equipment, he_to_update)
-      |> PlayerSchema.to_struct()
+      |> PlayerSchema.from_map()
 
     {:ok, player_from_db} = Player.upsert_player(player)
     {:ok, updated_player} = Player.upsert_player(player_to_update)
@@ -514,7 +514,7 @@ defmodule Iclash.DomainTypes.PlayerTest do
       player
       |> PlayerSchema.to_map()
       |> Map.put(:legend_statistics, ls_to_update)
-      |> PlayerSchema.to_struct()
+      |> PlayerSchema.from_map()
 
     {:ok, player_from_db} = Player.upsert_player(player)
     {:ok, updated_player} = Player.upsert_player(player_to_update)
@@ -550,7 +550,7 @@ defmodule Iclash.DomainTypes.PlayerTest do
       player
       |> PlayerSchema.to_map()
       |> Map.put(:legend_statistics, ls_to_update)
-      |> PlayerSchema.to_struct()
+      |> PlayerSchema.from_map()
 
     {:ok, player_from_db} = Player.upsert_player(player)
     {:ok, updated_player} = Player.upsert_player(player_to_update)

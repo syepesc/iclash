@@ -105,8 +105,8 @@ defmodule Iclash.Repo.Schemas.Player do
   @doc """
   Returns a Player struct from a map.
   """
-  @spec to_struct(player :: map()) :: {:ok, __MODULE__.t()} | {:error, errors_map()}
-  def to_struct(%{} = player) do
+  @spec from_map(player :: map()) :: {:ok, __MODULE__.t()} | {:error, errors_map()}
+  def from_map(%{} = player) do
     changeset = changeset(%__MODULE__{}, player)
 
     case changeset.valid? do
