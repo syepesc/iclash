@@ -556,9 +556,7 @@ defmodule Iclash.DomainTypes.PlayerTest do
     {:ok, updated_player} = Player.upsert_player(player_to_update)
 
     he_1 = Enum.find(player_from_db.legend_statistics, fn ls -> ls.trophies == 100 end)
-
-    updated_he_1 =
-      Enum.find(updated_player.legend_statistics, fn he -> he.trophies == 150 end)
+    updated_he_1 = Enum.find(updated_player.legend_statistics, fn he -> he.trophies == 150 end)
 
     assert he_1.updated_at != updated_he_1.updated_at
     assert he_1.inserted_at == updated_he_1.inserted_at

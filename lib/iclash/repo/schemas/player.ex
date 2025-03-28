@@ -81,6 +81,7 @@ defmodule Iclash.Repo.Schemas.Player do
       foreign_key: :player_tag,
       references: :tag,
       on_replace: :delete_if_exists,
+      # This preload order is used in the `Player.get_player()` function.
       preload_order: [asc: :updated_at]
 
     # TODO: implement the following assocs: `clan`.
