@@ -6,7 +6,7 @@ defmodule Iclash.Repo.Schemas.Player do
 
   alias Iclash.Repo.Enums.{ClanRole, WarPreference}
   alias Iclash.Repo.Schemas.{Heroe, Troop, Spell, HeroEquipment, LegendStatistic}
-  alias Iclash.Utils.StructUtils
+  alias Iclash.Utils.{StructUtils, ChagesetUtils}
 
   require Logger
 
@@ -98,7 +98,7 @@ defmodule Iclash.Repo.Schemas.Player do
     |> cast_assoc(:hero_equipment, with: &HeroEquipment.changeset/2)
     |> cast_assoc(:legend_statistics, with: &LegendStatistic.changeset/2)
     |> validate_required(@requiered_fields)
-    |> unique_constraint([:tag], message: "Tag must be unique.")
+    |> unique_constraint([:tag], message: "Player Tag must be unique.")
     |> validate_format(:tag, @starts_with_hash, message: "Tag must start with '#'.")
     |> validate_format(:tag, @letters_and_numbers, message: "Tag must be an alphanumeric string.")
   end
@@ -115,7 +115,7 @@ defmodule Iclash.Repo.Schemas.Player do
         {:ok, apply_changes(changeset)}
 
       false ->
-        errors = changeset_errors_to_map(changeset)
+        errors = ChagesetUtils.errors_on(changeset)
         Logger.error("Error parsing player to struct. errors=#{inspect(errors)}")
         {:error, errors}
     end
@@ -127,13 +127,5 @@ defmodule Iclash.Repo.Schemas.Player do
   @spec to_map(player :: __MODULE__.t()) :: map()
   def to_map(%__MODULE__{} = player) do
     StructUtils.deep_struct_to_map(player)
-  end
-
-  defp changeset_errors_to_map(changeset) do
-    Ecto.Changeset.traverse_errors(changeset, fn {message, opts} ->
-      Regex.replace(~r"%{(\w+)}", message, fn _, key ->
-        opts |> Keyword.get(String.to_existing_atom(key), key) |> to_string()
-      end)
-    end)
   end
 end
