@@ -3,6 +3,9 @@ defmodule Iclash.ClashApi do
   Clash of Clans API Behaviour
   """
 
+  # TODO: Implemented re authentication logic when api_token expires (http403).
+  # Needs to be confirmed if ClashAPI offers refresh token or not.
+
   # The otp_app config key is used to lookup the implementation dynamically.
   # By default the lookup happens during runtime for the TEST env build and at
   # compile time for all other builds
@@ -10,13 +13,19 @@ defmodule Iclash.ClashApi do
     otp_app: :iclash,
     default: Iclash.ClashApi.ClientImpl
 
-  alias Iclash.Repo.Schemas.Player
+  alias Iclash.Repo.Schemas.{Player, Clan, ClanWar}
 
   @type http_error :: {:error, {:http_error, Mint.HTTPError.t()}}
   @type network_error :: {:error, {:network_error, Mint.TransportError.t()}}
 
   @callback get_player(player_tag :: String.t()) ::
               {:ok, Player.t()} | http_error() | network_error()
+
+  @callback get_clan(clan_tag :: String.t()) ::
+              {:ok, Clan.t()} | http_error() | network_error()
+
+  @callback get_current_war(clan_tag :: String.t()) ::
+              {:ok, ClanWar.t()} | http_error() | network_error()
 end
 
 defmodule Iclash.ClashApi.ClientImpl do
@@ -25,19 +34,40 @@ defmodule Iclash.ClashApi.ClientImpl do
   """
   @behaviour Iclash.ClashApi
 
-  alias Iclash.Repo.Schemas.Player
+  alias Iclash.Repo.Schemas.{Player, Clan, ClanWar}
 
   require Logger
 
-  def get_player(tag) do
+  def get_player(player_tag) do
     {:ok, body} =
       base_request()
-      |> Req.merge(url: "/players/:player_tag", path_params: [player_tag: tag])
+      |> Req.merge(url: "/players/:player_tag", path_params: [player_tag: player_tag])
       |> make_request()
 
     body
     |> transform_legend_statistics()
     |> Player.from_map()
+  end
+
+  def get_clan(clan_tag) do
+    {:ok, body} =
+      base_request()
+      |> Req.merge(url: "/clans/:clan_tag", path_params: [clan_tag: clan_tag])
+      |> make_request()
+
+    body
+    # wars are populated separately in Clan DomainType bacuase Clash API does not return wars in the clan endpoint.
+    |> Map.put("wars", [])
+    |> Clan.from_map()
+  end
+
+  def get_current_war(clan_tag) do
+    {:ok, body} =
+      base_request()
+      |> Req.merge(url: "/clans/:clan_tag/currentwar", path_params: [clan_tag: clan_tag])
+      |> make_request()
+
+    ClanWar.from_map(body)
   end
 
   defp api_token, do: Application.fetch_env!(:iclash, ClashApiConfig)[:api_token]
