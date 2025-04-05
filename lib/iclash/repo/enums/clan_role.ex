@@ -6,7 +6,7 @@ defmodule Iclash.Repo.Enums.ClanRole do
 
   use Ecto.Type
 
-  @clan_roles [:not_member, :member, :leader, :admin, :coleader]
+  @clan_roles [:not_member, :member, :leader, :admin, :co_leader]
 
   # Declare Ecto Enum
   def type, do: :string

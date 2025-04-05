@@ -9,7 +9,7 @@ defmodule Iclash.Repo.Schemas.Clan do
   import Ecto.Changeset
 
   alias Iclash.Repo.Enums.{Warfrequency, ClanType}
-  alias Iclash.Repo.Embeds.{ClanLocation, ClanLanguage}
+  alias Iclash.Repo.Embeds.{ClanLocation, ClanLanguage, ClanMember}
   alias Iclash.Utils.{StructUtils, ChagesetUtils}
 
   require Logger
@@ -53,6 +53,8 @@ defmodule Iclash.Repo.Schemas.Clan do
     embeds_one :location, ClanLocation, on_replace: :update
     embeds_one :chat_language, ClanLanguage, on_replace: :update
 
+    embeds_many :member_list, ClanMember, on_replace: :delete
+
     timestamps(type: :utc_datetime_usec)
   end
 
@@ -61,6 +63,7 @@ defmodule Iclash.Repo.Schemas.Clan do
     |> cast(attrs, @requiered_fields ++ @optional_fields)
     |> cast_embed(:location, with: &ClanLocation.changeset/2)
     |> cast_embed(:chat_language, with: &ClanLanguage.changeset/2)
+    |> cast_embed(:member_list, with: &ClanMember.changeset/2)
     |> validate_required(@requiered_fields)
     |> unique_constraint([:tag], message: "Clan Tag must be unique.")
     |> validate_format(:tag, @starts_with_hash, message: "Tag must start with '#'.")
@@ -80,7 +83,7 @@ defmodule Iclash.Repo.Schemas.Clan do
 
       false ->
         errors = ChagesetUtils.errors_on(changeset)
-        Logger.error("Error parsing clan to struct. errors=#{inspect(errors)}")
+        Logger.error("Error parsing Clan to struct. errors=#{inspect(errors)}")
         {:error, errors}
     end
   end
