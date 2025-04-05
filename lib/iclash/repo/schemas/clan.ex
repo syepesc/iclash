@@ -10,6 +10,7 @@ defmodule Iclash.Repo.Schemas.Clan do
 
   alias Iclash.Repo.Enums.{Warfrequency, ClanType}
   alias Iclash.Repo.Embeds.{ClanLocation, ClanLanguage, ClanMember}
+  alias Iclash.Repo.Schemas.ClanWar
   alias Iclash.Utils.{StructUtils, ChagesetUtils}
 
   require Logger
@@ -55,6 +56,13 @@ defmodule Iclash.Repo.Schemas.Clan do
 
     embeds_many :member_list, ClanMember, on_replace: :delete
 
+    # The `:on_delete` behaviour MUST be defined in the assoc migration using: references().
+    has_many :wars, ClanWar,
+      foreign_key: :clan_tag,
+      references: :tag,
+      on_replace: :delete_if_exists,
+      preload_order: [asc: :updated_at]
+
     timestamps(type: :utc_datetime_usec)
   end
 
@@ -64,6 +72,7 @@ defmodule Iclash.Repo.Schemas.Clan do
     |> cast_embed(:location, with: &ClanLocation.changeset/2)
     |> cast_embed(:chat_language, with: &ClanLanguage.changeset/2)
     |> cast_embed(:member_list, with: &ClanMember.changeset/2)
+    |> cast_assoc(:wars, with: &ClanWar.changeset/2)
     |> validate_required(@requiered_fields)
     |> unique_constraint([:tag], message: "Clan Tag must be unique.")
     |> validate_format(:tag, @starts_with_hash, message: "Tag must start with '#'.")
