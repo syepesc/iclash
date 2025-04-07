@@ -63,7 +63,10 @@ defmodule Iclash.MixProject do
       {:typed_struct, "~> 0.1.4"},
 
       # dev
-      {:credo, "~> 1.7", only: [:dev, :test], runtime: false}
+      {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
+
+      # test
+      {:mox, "~> 1.1", only: [:test]}
     ]
   end
 
