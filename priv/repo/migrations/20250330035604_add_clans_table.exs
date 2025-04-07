@@ -18,6 +18,8 @@ defmodule Iclash.Repo.Migrations.AddClansTable do
       add :location, :map, null: false
       add :chat_language, :map, null: false
 
+      add :member_list, :map, null: false
+
       timestamps(type: :utc_datetime_usec)
     end
 

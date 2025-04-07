@@ -53,10 +53,7 @@ defmodule Iclash.ClashApi.ClientImpl do
       |> Req.merge(url: "/clans/:clan_tag", path_params: [clan_tag: clan_tag])
       |> make_request()
 
-    body
-    # wars are populated separately in Clan DomainType bacuase Clash API does not return wars in the clan endpoint.
-    |> Map.put("wars", [])
-    |> Clan.from_map()
+    Clan.from_map(body)
   end
 
   def fetch_current_war(clan_tag) do
