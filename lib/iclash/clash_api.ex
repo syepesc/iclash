@@ -12,13 +12,13 @@ defmodule Iclash.ClashApi do
   @type http_error :: {:error, {:http_error, Mint.HTTPError.t()}}
   @type network_error :: {:error, {:network_error, Mint.TransportError.t()}}
 
-  @callback get_player(player_tag :: String.t()) ::
+  @callback fetch_player(player_tag :: String.t()) ::
               {:ok, Player.t()} | http_error() | network_error()
 
-  @callback get_clan(clan_tag :: String.t()) ::
+  @callback fetch_clan(clan_tag :: String.t()) ::
               {:ok, Clan.t()} | http_error() | network_error()
 
-  @callback get_current_war(clan_tag :: String.t()) ::
+  @callback fetch_current_war(clan_tag :: String.t()) ::
               {:ok, ClanWar.t()}
               | {:ok, :not_in_war}
               | {:ok, :war_log_private}
@@ -36,7 +36,7 @@ defmodule Iclash.ClashApi.ClientImpl do
 
   require Logger
 
-  def get_player(player_tag) do
+  def fetch_player(player_tag) do
     {:ok, body} =
       base_request()
       |> Req.merge(url: "/players/:player_tag", path_params: [player_tag: player_tag])
@@ -47,7 +47,7 @@ defmodule Iclash.ClashApi.ClientImpl do
     |> Player.from_map()
   end
 
-  def get_clan(clan_tag) do
+  def fetch_clan(clan_tag) do
     {:ok, body} =
       base_request()
       |> Req.merge(url: "/clans/:clan_tag", path_params: [clan_tag: clan_tag])
@@ -59,7 +59,7 @@ defmodule Iclash.ClashApi.ClientImpl do
     |> Clan.from_map()
   end
 
-  def get_current_war(clan_tag) do
+  def fetch_current_war(clan_tag) do
     req =
       base_request()
       |> Req.merge(url: "/clans/:clan_tag/currentwar", path_params: [clan_tag: clan_tag])
