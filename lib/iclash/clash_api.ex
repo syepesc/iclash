@@ -64,11 +64,15 @@ defmodule Iclash.ClashApi.ClientImpl do
 
     case req do
       {:ok, body} ->
+        # We only care about these states:
+        # - inWar: The clan is currently in war.
+        # - warEnded: The clan is currently in war, but the war has ended.
+        # Other states are not relevant for us.
         if body["state"] in ["inWar", "warEnded"] do
           body
           |> extract_clan_war_attacks()
-          |> extract_opponent_tag_from_clan_war_body()
-          |> transform_string_date_into_datetime_struct()
+          |> extract_opponent_tag()
+          |> transform_date_into_datetime_struct()
           |> ClanWar.from_map()
         else
           Logger.info("Skipping, no current war found for clan with tag #{clan_tag}.")
@@ -81,6 +85,7 @@ defmodule Iclash.ClashApi.ClientImpl do
         {:ok, :war_log_private}
 
       _ ->
+        # This bubbles-up the returns from make_request/1.
         req
     end
   end
@@ -153,7 +158,7 @@ defmodule Iclash.ClashApi.ClientImpl do
     Map.put(body, "legend_statistics", [current_season, previous_season])
   end
 
-  defp transform_string_date_into_datetime_struct(body) do
+  defp transform_date_into_datetime_struct(body) do
     # As defined in the ClanWar schema, the `start_time` and `end_time` are `utc_datetime_usec`.
     # However, Clash API return a string with the following format representing a date: "20250330T105010.000Z"
     #
@@ -165,7 +170,7 @@ defmodule Iclash.ClashApi.ClientImpl do
     |> Map.put("end_time", format_date_string(body["end_time"]))
   end
 
-  defp extract_opponent_tag_from_clan_war_body(body) do
+  defp extract_opponent_tag(body) do
     # As defined in the ClanWar schema, the `opponent` field is a string.
     # However, Clash API return a map with the opponent clan info.
     #
