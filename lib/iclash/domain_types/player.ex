@@ -9,20 +9,21 @@ defmodule Iclash.DomainTypes.Player do
   import Ecto.Query
 
   alias Ecto.Multi
+  alias Iclash.ClashApi
   alias Iclash.Repo
   alias Iclash.Repo.Schemas.{Player, Heroe, Troop, Spell, HeroEquipment, LegendStatistic}
 
   require Logger
 
   @doc """
-  Get a player by tag, with all its preloads (heroes, troops, spells, hero_equipment, and legend_statistics).
+  Gets a player by tag, with all its preloads (heroes, troops, spells, hero_equipment, and legend_statistics).
+  If the player is not found in the database, the function will attempt to fetch the player's data from the ClashAPI.
   """
   @spec get_player(tag :: String.t()) :: Player.t() | {:error, :not_found}
   def get_player(tag) do
     result =
       Player
       |> Repo.get(tag)
-      # This preload corresponds to the `preload_order` defined in the `Player` schema.
       |> Repo.preload(
         heroes: from(h in Heroe, order_by: [asc: h.updated_at]),
         troops: from(t in Troop, order_by: [asc: t.updated_at]),
@@ -32,8 +33,14 @@ defmodule Iclash.DomainTypes.Player do
       )
 
     case result do
-      nil -> {:error, :not_found}
-      player -> player
+      nil ->
+        case ClashApi.fetch_player(tag) do
+          {:ok, player} -> player
+          {:error, _} -> {:error, :not_found}
+        end
+
+      player ->
+        player
     end
   end
 

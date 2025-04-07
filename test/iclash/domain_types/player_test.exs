@@ -1,6 +1,8 @@
 defmodule Iclash.DomainTypes.PlayerTest do
   use Iclash.DataCase, async: true
 
+  import Mox
+
   alias Iclash.DomainTypes.Player, as: Player
   alias Iclash.Repo.Schemas.Player, as: PlayerSchema
 
@@ -107,9 +109,21 @@ defmodule Iclash.DomainTypes.PlayerTest do
       assert inserted_player == player_form_db
     end
 
-    test "gets a player and return error tuple if not found", %{player: player} do
-      result = Player.get_player(player.tag)
-      assert result == {:error, :not_found}
+    test "do not fetch player's data from clash api if player is found in db", %{player: player} do
+      MockClashApi |> expect(:fetch_player, 0, fn _ -> {:ok, player} end)
+      {:ok, inserted_player} = Player.upsert_player(player)
+      player_form_db = Player.get_player(player.tag)
+      assert inserted_player == player_form_db
+    end
+
+    test "fetch player's data from clash api if not found in db", %{player: player} do
+      MockClashApi |> expect(:fetch_player, fn _ -> {:ok, player} end)
+      assert player == Player.get_player(player.tag)
+    end
+
+    test "return error tuple if not found in db and clash api", %{player: player} do
+      MockClashApi |> expect(:fetch_player, fn _ -> {:error, {:http_error, %Req.Response{}}} end)
+      assert {:error, :not_found} == Player.get_player(player.tag)
     end
   end
 
