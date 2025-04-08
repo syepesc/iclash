@@ -111,7 +111,7 @@ defmodule Iclash.DomainTypes.ClanTest do
 
       updated_clan = Map.put(clan, :member_list, new_member_list)
 
-      {:ok, clan_from_db} = Clan.upsert_clan(clan)
+      {:ok, _clan_from_db} = Clan.upsert_clan(clan)
       {:ok, updated_clan} = Clan.upsert_clan(updated_clan)
 
       assert clan != updated_clan

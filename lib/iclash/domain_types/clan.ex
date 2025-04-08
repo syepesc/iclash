@@ -4,8 +4,6 @@ defmodule Iclash.DomainTypes.Clan do
   This module defines functionalities to interact with a Clan info.
   """
 
-  # import Ecto.Query
-
   alias Iclash.ClashApi
   alias Iclash.Repo
   alias Iclash.Repo.Schemas.Clan
