@@ -134,6 +134,7 @@ defmodule Iclash.DomainTypes.PlayerTest do
     end
 
     test "updates a player", %{player: player} do
+      # TODO: try a parametrized test with different fields
       new_name = "NEW NAME"
       updated_player = Map.put(player, :name, new_name)
 
