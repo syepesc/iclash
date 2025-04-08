@@ -410,169 +410,169 @@ defmodule Iclash.DomainTypes.PlayerTest do
       assert spell_1.updated_at != updated_spell_1.updated_at
       assert spell_1.inserted_at == updated_spell_1.inserted_at
     end
-  end
 
-  test "keeps track of changes in player associated hero equipment", %{now: now, player: player} do
-    eigth_minutes_later = DateTime.add(now, 8, :minute)
-    new_he_name = "NEW HERO EQUIPMENT"
+    test "keeps track of changes in player associated hero equipment", %{now: now, player: player} do
+      eigth_minutes_later = DateTime.add(now, 8, :minute)
+      new_he_name = "NEW HERO EQUIPMENT"
 
-    he_to_update = [
-      # New HE, now database should have 2 HE.
-      %{
-        player_tag: "#P1",
-        name: new_he_name,
-        level: 100,
-        max_level: 100,
-        village: "home",
-        inserted_at: eigth_minutes_later,
-        updated_at: eigth_minutes_later
-      },
-      # Update existing HE level, now database should have 3 HE.
-      # Keeping the previous record for this HE and persisting the updated one.
-      %{
-        player_tag: "#P1",
-        name: "HERO EQUIPMENT 1",
-        level: 100,
-        max_level: 100,
-        village: "home",
-        inserted_at: eigth_minutes_later,
-        updated_at: eigth_minutes_later
-      }
-    ]
+      he_to_update = [
+        # New HE, now database should have 2 HE.
+        %{
+          player_tag: "#P1",
+          name: new_he_name,
+          level: 100,
+          max_level: 100,
+          village: "home",
+          inserted_at: eigth_minutes_later,
+          updated_at: eigth_minutes_later
+        },
+        # Update existing HE level, now database should have 3 HE.
+        # Keeping the previous record for this HE and persisting the updated one.
+        %{
+          player_tag: "#P1",
+          name: "HERO EQUIPMENT 1",
+          level: 100,
+          max_level: 100,
+          village: "home",
+          inserted_at: eigth_minutes_later,
+          updated_at: eigth_minutes_later
+        }
+      ]
 
-    # Workaround to append new HE into the player struct (defined in setup).
-    {:ok, player_to_update} =
-      player
-      |> PlayerSchema.to_map()
-      |> Map.put(:hero_equipment, he_to_update)
-      |> PlayerSchema.from_map()
+      # Workaround to append new HE into the player struct (defined in setup).
+      {:ok, player_to_update} =
+        player
+        |> PlayerSchema.to_map()
+        |> Map.put(:hero_equipment, he_to_update)
+        |> PlayerSchema.from_map()
 
-    {:ok, player_from_db} = Player.upsert_player(player)
-    {:ok, updated_player} = Player.upsert_player(player_to_update)
+      {:ok, player_from_db} = Player.upsert_player(player)
+      {:ok, updated_player} = Player.upsert_player(player_to_update)
 
-    # Assert 1 HE after initial player insertion.
-    assert length(player_from_db.hero_equipment) == 1
-    # Assert 3 records in DB. 1 existing HE, 1 new HE and 1 updated HE.
-    assert length(updated_player.hero_equipment) == 3
-    assert Enum.any?(updated_player.hero_equipment, fn he -> he.name == new_he_name end)
-  end
+      # Assert 1 HE after initial player insertion.
+      assert length(player_from_db.hero_equipment) == 1
+      # Assert 3 records in DB. 1 existing HE, 1 new HE and 1 updated HE.
+      assert length(updated_player.hero_equipment) == 3
+      assert Enum.any?(updated_player.hero_equipment, fn he -> he.name == new_he_name end)
+    end
 
-  test "updates associated player hero equipment updated_at and keeps inserted_at", %{
-    now: now,
-    player: player
-  } do
-    eigth_minutes_later = DateTime.add(now, 8, :minute)
+    test "updates associated player hero equipment updated_at and keeps inserted_at", %{
+      now: now,
+      player: player
+    } do
+      eigth_minutes_later = DateTime.add(now, 8, :minute)
 
-    he_to_update = [
-      # When a data refresh is performed but, the HE data is the same.
-      # The record should be updated with the new timestamp.
-      # This record must be the same as the one in the setup (except for the timestamps).
-      %{
-        player_tag: "#P1",
-        name: "HERO EQUIPMENT 1",
-        level: 50,
-        max_level: 100,
-        village: "home",
-        inserted_at: eigth_minutes_later,
-        updated_at: eigth_minutes_later
-      }
-    ]
+      he_to_update = [
+        # When a data refresh is performed but, the HE data is the same.
+        # The record should be updated with the new timestamp.
+        # This record must be the same as the one in the setup (except for the timestamps).
+        %{
+          player_tag: "#P1",
+          name: "HERO EQUIPMENT 1",
+          level: 50,
+          max_level: 100,
+          village: "home",
+          inserted_at: eigth_minutes_later,
+          updated_at: eigth_minutes_later
+        }
+      ]
 
-    # Workaround to append new he into the player struct (defined in setup).
-    {:ok, player_to_update} =
-      player
-      |> PlayerSchema.to_map()
-      |> Map.put(:hero_equipment, he_to_update)
-      |> PlayerSchema.from_map()
+      # Workaround to append new he into the player struct (defined in setup).
+      {:ok, player_to_update} =
+        player
+        |> PlayerSchema.to_map()
+        |> Map.put(:hero_equipment, he_to_update)
+        |> PlayerSchema.from_map()
 
-    {:ok, player_from_db} = Player.upsert_player(player)
-    {:ok, updated_player} = Player.upsert_player(player_to_update)
+      {:ok, player_from_db} = Player.upsert_player(player)
+      {:ok, updated_player} = Player.upsert_player(player_to_update)
 
-    he_1 = Enum.find(player_from_db.hero_equipment, fn he -> he.name == "HERO EQUIPMENT 1" end)
+      he_1 = Enum.find(player_from_db.hero_equipment, fn he -> he.name == "HERO EQUIPMENT 1" end)
 
-    updated_he_1 =
-      Enum.find(updated_player.hero_equipment, fn he -> he.name == "HERO EQUIPMENT 1" end)
+      updated_he_1 =
+        Enum.find(updated_player.hero_equipment, fn he -> he.name == "HERO EQUIPMENT 1" end)
 
-    assert he_1.updated_at != updated_he_1.updated_at
-    assert he_1.inserted_at == updated_he_1.inserted_at
-  end
+      assert he_1.updated_at != updated_he_1.updated_at
+      assert he_1.inserted_at == updated_he_1.inserted_at
+    end
 
-  test "keeps track of changes in player associated legend statistics", %{
-    now: now,
-    player: player
-  } do
-    eigth_minutes_later = DateTime.add(now, 8, :minute)
-    new_trophies = 150
+    test "keeps track of changes in player associated legend statistics", %{
+      now: now,
+      player: player
+    } do
+      eigth_minutes_later = DateTime.add(now, 8, :minute)
+      new_trophies = 150
 
-    ls_to_update = [
-      # New LS, now database should have 2 LS.
-      %{
-        id: "2025-02",
-        rank: 10,
-        trophies: 100,
-        inserted_at: eigth_minutes_later,
-        updated_at: eigth_minutes_later
-      },
-      # Update existing LS, now database should have 2 LS.
-      %{
-        id: "2025-01",
-        rank: 10,
-        trophies: new_trophies,
-        inserted_at: eigth_minutes_later,
-        updated_at: eigth_minutes_later
-      }
-    ]
+      ls_to_update = [
+        # New LS, now database should have 2 LS.
+        %{
+          id: "2025-02",
+          rank: 10,
+          trophies: 100,
+          inserted_at: eigth_minutes_later,
+          updated_at: eigth_minutes_later
+        },
+        # Update existing LS, now database should have 2 LS.
+        %{
+          id: "2025-01",
+          rank: 10,
+          trophies: new_trophies,
+          inserted_at: eigth_minutes_later,
+          updated_at: eigth_minutes_later
+        }
+      ]
 
-    # Workaround to append new LS into the player struct (defined in setup).
-    {:ok, player_to_update} =
-      player
-      |> PlayerSchema.to_map()
-      |> Map.put(:legend_statistics, ls_to_update)
-      |> PlayerSchema.from_map()
+      # Workaround to append new LS into the player struct (defined in setup).
+      {:ok, player_to_update} =
+        player
+        |> PlayerSchema.to_map()
+        |> Map.put(:legend_statistics, ls_to_update)
+        |> PlayerSchema.from_map()
 
-    {:ok, player_from_db} = Player.upsert_player(player)
-    {:ok, updated_player} = Player.upsert_player(player_to_update)
+      {:ok, player_from_db} = Player.upsert_player(player)
+      {:ok, updated_player} = Player.upsert_player(player_to_update)
 
-    # Assert 1 HE after initial player insertion.
-    assert length(player_from_db.legend_statistics) == 1
-    # Assert 3 records in DB. 1 existing HE, and 1 updated HE.
-    assert length(updated_player.legend_statistics) == 2
-    assert Enum.any?(updated_player.legend_statistics, fn ls -> ls.trophies == new_trophies end)
-  end
+      # Assert 1 HE after initial player insertion.
+      assert length(player_from_db.legend_statistics) == 1
+      # Assert 3 records in DB. 1 existing HE, and 1 updated HE.
+      assert length(updated_player.legend_statistics) == 2
+      assert Enum.any?(updated_player.legend_statistics, fn ls -> ls.trophies == new_trophies end)
+    end
 
-  test "updates associated player legend statistics updated_at and keeps inserted_at", %{
-    now: now,
-    player: player
-  } do
-    eigth_minutes_later = DateTime.add(now, 8, :minute)
-    new_trophies = 150
+    test "updates associated player legend statistics updated_at and keeps inserted_at", %{
+      now: now,
+      player: player
+    } do
+      eigth_minutes_later = DateTime.add(now, 8, :minute)
+      new_trophies = 150
 
-    ls_to_update = [
-      # When a data refresh is performed but, the LS data is the same.
-      # The record should be updated with the new timestamp.
-      %{
-        id: "2025-01",
-        rank: 10,
-        trophies: new_trophies,
-        inserted_at: eigth_minutes_later,
-        updated_at: eigth_minutes_later
-      }
-    ]
+      ls_to_update = [
+        # When a data refresh is performed but, the LS data is the same.
+        # The record should be updated with the new timestamp.
+        %{
+          id: "2025-01",
+          rank: 10,
+          trophies: new_trophies,
+          inserted_at: eigth_minutes_later,
+          updated_at: eigth_minutes_later
+        }
+      ]
 
-    # Workaround to append new LS into the player struct (defined in setup).
-    {:ok, player_to_update} =
-      player
-      |> PlayerSchema.to_map()
-      |> Map.put(:legend_statistics, ls_to_update)
-      |> PlayerSchema.from_map()
+      # Workaround to append new LS into the player struct (defined in setup).
+      {:ok, player_to_update} =
+        player
+        |> PlayerSchema.to_map()
+        |> Map.put(:legend_statistics, ls_to_update)
+        |> PlayerSchema.from_map()
 
-    {:ok, player_from_db} = Player.upsert_player(player)
-    {:ok, updated_player} = Player.upsert_player(player_to_update)
+      {:ok, player_from_db} = Player.upsert_player(player)
+      {:ok, updated_player} = Player.upsert_player(player_to_update)
 
-    he_1 = Enum.find(player_from_db.legend_statistics, fn ls -> ls.trophies == 100 end)
-    updated_he_1 = Enum.find(updated_player.legend_statistics, fn he -> he.trophies == 150 end)
+      he_1 = Enum.find(player_from_db.legend_statistics, fn ls -> ls.trophies == 100 end)
+      updated_he_1 = Enum.find(updated_player.legend_statistics, fn he -> he.trophies == 150 end)
 
-    assert he_1.updated_at != updated_he_1.updated_at
-    assert he_1.inserted_at == updated_he_1.inserted_at
+      assert he_1.updated_at != updated_he_1.updated_at
+      assert he_1.inserted_at == updated_he_1.inserted_at
+    end
   end
 end
