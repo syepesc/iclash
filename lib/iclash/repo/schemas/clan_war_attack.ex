@@ -7,7 +7,6 @@ defmodule Iclash.Repo.Schemas.ClanWarAttack do
 
   import Ecto.Changeset
 
-  alias Iclash.Repo.Schemas.ClanWar
   alias Iclash.Utils.{StructUtils, ChagesetUtils}
 
   require Logger
@@ -21,6 +20,9 @@ defmodule Iclash.Repo.Schemas.ClanWarAttack do
   # Adding timestamps as optionnal fields comes handy when testing with a fixed time.
   @optional_fields [:inserted_at, :updated_at]
   @requiered_fields [
+    :clan_tag,
+    :opponent,
+    :war_start_time,
     :attacker_tag,
     :defender_tag,
     :stars,
@@ -31,19 +33,17 @@ defmodule Iclash.Repo.Schemas.ClanWarAttack do
 
   @primary_key false
   schema "clan_war_attacks" do
+    # This are the foreign keys from clan_wars table used as part of the composite primary key.
+    field :clan_tag, :string, primary_key: true
+    field :opponent, :string, primary_key: true
+    field :war_start_time, :utc_datetime_usec, primary_key: true
+
     field :attacker_tag, :string, primary_key: true
     field :defender_tag, :string, primary_key: true
     field :stars, :integer
     field :destruction_percentage, :integer
     field :order, :integer
     field :duration, :integer
-
-    belongs_to :clan_war, ClanWar,
-      foreign_key: :clan_tag,
-      type: :string,
-      references: :clan_tag,
-      on_replace: :update,
-      primary_key: true
 
     timestamps(type: :utc_datetime_usec)
   end
@@ -53,6 +53,12 @@ defmodule Iclash.Repo.Schemas.ClanWarAttack do
     |> cast(attrs, @requiered_fields ++ @optional_fields)
     |> validate_required(@requiered_fields)
     |> validate_format(:attacker_tag, @starts_with_hash,
+      message: "Player Tag must start with '#'."
+    )
+    |> validate_format(:attacker_tag, @letters_and_numbers,
+      message: "Player Tag must be an alphanumeric string."
+    )
+    |> validate_format(:defender_tag, @starts_with_hash,
       message: "Player Tag must start with '#'."
     )
     |> validate_format(:defender_tag, @letters_and_numbers,

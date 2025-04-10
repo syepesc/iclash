@@ -7,7 +7,6 @@ defmodule Iclash.Repo.Schemas.ClanWar do
 
   alias Iclash.Repo.Enums.WarState
   alias Iclash.Repo.Schemas.ClanWarAttack
-  alias Iclash.Repo.Schemas.Clan
   alias Iclash.Utils.{StructUtils, ChagesetUtils}
 
   require Logger
@@ -21,6 +20,7 @@ defmodule Iclash.Repo.Schemas.ClanWar do
   # Adding timestamps as optionnal fields comes handy when testing with a fixed time.
   @optional_fields [:inserted_at, :updated_at]
   @requiered_fields [
+    :clan_tag,
     :opponent,
     :state,
     :start_time,
@@ -29,19 +29,18 @@ defmodule Iclash.Repo.Schemas.ClanWar do
 
   @primary_key false
   schema "clan_wars" do
+    field :clan_tag, :string, primary_key: true
     field :opponent, :string, primary_key: true
-    field :state, WarState, virtual: true, default: nil
+    field :state, WarState, default: nil
     field :start_time, :utc_datetime_usec, primary_key: true
     field :end_time, :utc_datetime_usec
 
-    embeds_many :attacks, ClanWarAttack
-
-    belongs_to :clan, Clan,
-      foreign_key: :clan_tag,
-      type: :string,
-      references: :tag,
-      on_replace: :update,
-      primary_key: true
+    has_many :attacks, ClanWarAttack,
+      foreign_key: :war_start_time,
+      references: :start_time,
+      on_replace: :delete_if_exists,
+      # This preload order is used in the `Player.get_player()` function.
+      preload_order: [asc: :order]
 
     timestamps(type: :utc_datetime_usec)
   end
@@ -49,11 +48,15 @@ defmodule Iclash.Repo.Schemas.ClanWar do
   def changeset(%__MODULE__{} = clan_war, attrs \\ %{}) do
     clan_war
     |> cast(attrs, @requiered_fields ++ @optional_fields)
-    |> cast_embed(:attacks, with: &ClanWarAttack.changeset/2)
+    |> cast_assoc(:attacks, with: &ClanWarAttack.changeset/2)
     |> validate_required(@requiered_fields)
-    |> validate_format(:opponent, @starts_with_hash, message: "Opponent Tag must start with '#'.")
+    |> validate_format(:clan_tag, @starts_with_hash, message: "Tag must start with '#'.")
+    |> validate_format(:clan_tag, @letters_and_numbers,
+      message: "Tag must be an alphanumeric string."
+    )
+    |> validate_format(:opponent, @starts_with_hash, message: "Tag must start with '#'.")
     |> validate_format(:opponent, @letters_and_numbers,
-      message: "Opponent Tag must be an alphanumeric string."
+      message: "Tag must be an alphanumeric string."
     )
   end
 
