@@ -17,7 +17,7 @@ defmodule Iclash.Repo.Schemas.HeroEquipment do
   # To define a composite-key we need to add `primary_key: true` to
   # the fields that forms the primary key. Finally add it to the migration.
   @primary_key false
-  schema "hero_equipment" do
+  schema "hero_equipments" do
     field :name, :string, primary_key: true
     field :level, :integer, primary_key: true
     field :max_level, :integer

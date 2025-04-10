@@ -1,8 +1,8 @@
-defmodule Iclash.Repo.Migrations.AddHeroEquipmentTable do
+defmodule Iclash.Repo.Migrations.AddHeroEquipmentsTable do
   use Ecto.Migration
 
   def change do
-    create table(:hero_equipment, primary_key: false) do
+    create table(:hero_equipments, primary_key: false) do
       add :player_tag,
           references(:players,
             column: :tag,
@@ -20,6 +20,6 @@ defmodule Iclash.Repo.Migrations.AddHeroEquipmentTable do
       timestamps(type: :utc_datetime_usec)
     end
 
-    create unique_index(:hero_equipment, [:player_tag, :name, :level])
+    create unique_index(:hero_equipments, [:player_tag, :name, :level])
   end
 end
