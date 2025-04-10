@@ -8,6 +8,7 @@ defmodule Iclash.Repo.Migrations.AddClanWarsTable do
       add :state, :string, null: false
       add :start_time, :utc_datetime_usec, primary_key: true
       add :end_time, :utc_datetime_usec, null: false
+      add :war_type, :string, null: false
 
       timestamps(type: :utc_datetime_usec)
     end

@@ -33,6 +33,7 @@ defmodule Iclash.DomainTypes.ClanWarTest do
         state: :in_war,
         start_time: now,
         end_time: tomorrow,
+        war_type: :clan_war,
         attacks: attacks,
         inserted_at: now,
         updated_at: now

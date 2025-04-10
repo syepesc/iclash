@@ -70,6 +70,8 @@ defmodule Iclash.ClashApi.ClientImpl do
         # Other states are not relevant for us.
         if body["state"] in ["inWar", "warEnded"] do
           body
+          # Added war_type manually here to identify between clan_war and clan_war_league wars.
+          |> Map.put("war_type", "clan_war")
           |> extract_clan_war_attacks()
           |> extract_opponent_tag()
           |> transform_date_into_datetime_struct()
@@ -79,7 +81,7 @@ defmodule Iclash.ClashApi.ClientImpl do
           {:ok, :not_in_war}
         end
 
-      # Specific error handling when clans have their WarLog Private.
+      # Specific error handling when clans have their war log private.
       {:error, {:http_error, %Req.Response{status: 403}}} ->
         Logger.info("Clan tag #{clan_tag} has Private War Log.")
         {:ok, :war_log_private}
@@ -98,7 +100,7 @@ defmodule Iclash.ClashApi.ClientImpl do
       retry: :transient,
       auth: {:bearer, api_token()},
       base_url: base_url(),
-      # Transform keys from camelCase to snake_case.
+      # Transform keys from CamelCase/camelCase to snake_case.
       decode_json: [keys: fn k -> k |> Macro.underscore() end]
     )
   end

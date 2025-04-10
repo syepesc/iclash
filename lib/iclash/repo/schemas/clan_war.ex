@@ -6,6 +6,7 @@ defmodule Iclash.Repo.Schemas.ClanWar do
   import Ecto.Changeset
 
   alias Iclash.Repo.Enums.WarState
+  alias Iclash.Repo.Enums.WarType
   alias Iclash.Repo.Schemas.ClanWarAttack
   alias Iclash.Utils.{StructUtils, ChagesetUtils}
 
@@ -24,7 +25,8 @@ defmodule Iclash.Repo.Schemas.ClanWar do
     :opponent,
     :state,
     :start_time,
-    :end_time
+    :end_time,
+    :war_type
   ]
 
   @primary_key false
@@ -34,6 +36,7 @@ defmodule Iclash.Repo.Schemas.ClanWar do
     field :state, WarState, default: nil
     field :start_time, :utc_datetime_usec, primary_key: true
     field :end_time, :utc_datetime_usec
+    field :war_type, WarType
 
     has_many :attacks, ClanWarAttack,
       foreign_key: :war_start_time,
