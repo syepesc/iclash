@@ -18,5 +18,7 @@ defmodule Iclash.Repo.Migrations.AddLegendStatisticsTable do
 
       timestamps(type: :utc_datetime_usec)
     end
+
+    create unique_index(:legend_statistics, [:player_tag, :id])
   end
 end

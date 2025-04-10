@@ -37,5 +37,6 @@ defmodule Iclash.Repo.Schemas.Troop do
     troop
     |> cast(attrs, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
+    |> unique_constraint([:player_tag, :name, :level], message: "Troop must be unique.")
   end
 end

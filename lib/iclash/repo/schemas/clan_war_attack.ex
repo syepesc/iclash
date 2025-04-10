@@ -52,6 +52,9 @@ defmodule Iclash.Repo.Schemas.ClanWarAttack do
     clan_war_attack
     |> cast(attrs, @requiered_fields ++ @optional_fields)
     |> validate_required(@requiered_fields)
+    |> unique_constraint([:clan_tag, :opponent, :war_start_time, :attacker_tag, :defender_tag],
+      message: "Clan War Attack must be unique."
+    )
     |> validate_format(:attacker_tag, @starts_with_hash,
       message: "Player Tag must start with '#'."
     )

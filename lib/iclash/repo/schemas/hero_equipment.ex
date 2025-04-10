@@ -37,5 +37,6 @@ defmodule Iclash.Repo.Schemas.HeroEquipment do
     hero_equipment
     |> cast(attrs, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
+    |> unique_constraint([:player_tag, :name, :level], message: "Heroe Equipment must be unique.")
   end
 end

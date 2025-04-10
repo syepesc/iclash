@@ -37,5 +37,6 @@ defmodule Iclash.Repo.Schemas.Heroe do
     heroe
     |> cast(attrs, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
+    |> unique_constraint([:player_tag, :name, :level], message: "Heroe must be unique.")
   end
 end

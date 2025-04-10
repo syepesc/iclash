@@ -28,5 +28,6 @@ defmodule Iclash.Repo.Schemas.LegendStatistic do
     legend_statistic
     |> cast(attrs, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
+    |> unique_constraint([:player_tag, :id], message: "Legend Statistic must be unique.")
   end
 end

@@ -19,5 +19,7 @@ defmodule Iclash.Repo.Migrations.AddHeroesTable do
 
       timestamps(type: :utc_datetime_usec)
     end
+
+    create unique_index(:heroes, [:player_tag, :name, :level])
   end
 end

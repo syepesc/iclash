@@ -37,5 +37,6 @@ defmodule Iclash.Repo.Schemas.Spell do
     spell
     |> cast(attrs, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
+    |> unique_constraint([:player_tag, :name, :level], message: "Spell must be unique.")
   end
 end

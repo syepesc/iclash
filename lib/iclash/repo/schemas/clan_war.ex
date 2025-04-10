@@ -50,6 +50,7 @@ defmodule Iclash.Repo.Schemas.ClanWar do
     |> cast(attrs, @requiered_fields ++ @optional_fields)
     |> cast_assoc(:attacks, with: &ClanWarAttack.changeset/2)
     |> validate_required(@requiered_fields)
+    |> unique_constraint([:clan_tag, :opponent, :start_time], message: "Clan War must be unique.")
     |> validate_format(:clan_tag, @starts_with_hash, message: "Tag must start with '#'.")
     |> validate_format(:clan_tag, @letters_and_numbers,
       message: "Tag must be an alphanumeric string."

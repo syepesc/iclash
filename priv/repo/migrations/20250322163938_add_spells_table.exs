@@ -19,5 +19,7 @@ defmodule Iclash.Repo.Migrations.AddSpellsTable do
 
       timestamps(type: :utc_datetime_usec)
     end
+
+    create unique_index(:spells, [:player_tag, :name, :level])
   end
 end

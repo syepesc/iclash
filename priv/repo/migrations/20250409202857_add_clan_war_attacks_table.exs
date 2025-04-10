@@ -38,6 +38,15 @@ defmodule Iclash.Repo.Migrations.AddClanWarAttacksTable do
 
   def down do
     execute("ALTER TABLE clan_war_attacks DROP CONSTRAINT clan_war_attacks_fk")
+
+    drop index(:clan_war_attacks, [
+           :clan_tag,
+           :opponent,
+           :war_start_time,
+           :attacker_tag,
+           :defender_tag
+         ])
+
     drop table(:clan_war_attacks)
   end
 end
