@@ -37,32 +37,32 @@ defmodule Iclash.ClashApi.ClientImpl do
   require Logger
 
   def fetch_player(player_tag) do
-    {:ok, body} =
-      base_request()
-      |> Req.merge(url: "/players/:player_tag", path_params: [player_tag: player_tag])
-      |> make_request()
-
-    body
-    |> transform_legend_statistics()
-    |> Player.from_map()
+    base_request()
+    |> Req.merge(url: "/players/:player_tag", path_params: [player_tag: player_tag])
+    |> make_request()
+    |> case do
+      {:ok, body} -> body |> transform_legend_statistics() |> Player.from_map()
+      # This bubbles-up the returns from make_request/1.
+      error -> error
+    end
   end
 
   def fetch_clan(clan_tag) do
-    {:ok, body} =
-      base_request()
-      |> Req.merge(url: "/clans/:clan_tag", path_params: [clan_tag: clan_tag])
-      |> make_request()
-
-    Clan.from_map(body)
+    base_request()
+    |> Req.merge(url: "/clans/:clan_tag", path_params: [clan_tag: clan_tag])
+    |> make_request()
+    |> case do
+      {:ok, body} -> Clan.from_map(body)
+      # This bubbles-up the returns from make_request/1.
+      error -> error
+    end
   end
 
   def fetch_current_war(clan_tag) do
-    req =
-      base_request()
-      |> Req.merge(url: "/clans/:clan_tag/currentwar", path_params: [clan_tag: clan_tag])
-      |> make_request()
-
-    case req do
+    base_request()
+    |> Req.merge(url: "/clans/:clan_tag/currentwar", path_params: [clan_tag: clan_tag])
+    |> make_request()
+    |> case do
       {:ok, body} ->
         # We only care about these states:
         # - inWar: The clan is currently in war.
@@ -89,9 +89,9 @@ defmodule Iclash.ClashApi.ClientImpl do
         Logger.info("Clan tag #{clan_tag} has Private War Log.")
         {:ok, :war_log_private}
 
-      _ ->
+      error ->
         # This bubbles-up the returns from make_request/1.
-        req
+        error
     end
   end
 
@@ -109,18 +109,20 @@ defmodule Iclash.ClashApi.ClientImpl do
   end
 
   defp make_request(%Req.Request{} = req) do
-    Logger.info("Clash API request attempt")
+    Logger.info(
+      "Clash API request attempt. url=#{req.url} params=#{inspect(Map.get(req.options, :params))} path_params=#{inspect(Map.get(req.options, :path_params))}"
+    )
 
     case Req.get(req) do
       {:ok, %Req.Response{status: 200} = response} ->
         {:ok, response.body}
 
       {:ok, %Req.Response{status: _} = reason} ->
-        Logger.error("HTTP request error. error=#{inspect(reason)} request=#{inspect(req)}")
+        Logger.warning("HTTP request error. error=#{inspect(reason)} request=#{inspect(req)}")
         {:error, {:http_error, reason}}
 
       {:error, reason} ->
-        Logger.error("Network error. error=#{inspect(reason)} request=#{inspect(req)}")
+        Logger.warning("Network error. error=#{inspect(reason)} request=#{inspect(req)}")
         {:error, {:network_error, reason}}
     end
   end
