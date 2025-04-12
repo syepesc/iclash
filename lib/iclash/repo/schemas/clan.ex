@@ -21,15 +21,13 @@ defmodule Iclash.Repo.Schemas.Clan do
   @starts_with_hash ~r/^#/
   @letters_and_numbers ~r/^#[A-Za-z0-9]+$/
 
-  # Adding timestamps as optionnal fields comes handy when testing with a fixed time.
-  @optional_fields [:inserted_at, :updated_at]
+  # Adding timestamps as optional fields comes handy when testing with a fixed time.
+  @optional_fields [:inserted_at, :updated_at, :description, :war_frequency]
   @requiered_fields [
     :tag,
     :name,
     :type,
-    :description,
     :clan_level,
-    :war_frequency,
     :war_win_streak,
     :war_wins,
     :war_ties,
@@ -44,14 +42,14 @@ defmodule Iclash.Repo.Schemas.Clan do
     field :description, :string
     field :clan_level, :integer
     field :war_frequency, Warfrequency
-    field :war_win_streak, :integer
-    field :war_wins, :integer
-    field :war_ties, :integer
-    field :war_losses, :integer
+    field :war_win_streak, :integer, default: 0
+    field :war_wins, :integer, default: 0
+    field :war_ties, :integer, default: 0
+    field :war_losses, :integer, default: 0
     field :is_war_log_public, :boolean
 
-    embeds_one :location, ClanLocation, on_replace: :update
-    embeds_one :chat_language, ClanLanguage, on_replace: :update
+    embeds_one :location, ClanLocation, on_replace: :update, defaults_to_struct: true
+    embeds_one :chat_language, ClanLanguage, on_replace: :update, defaults_to_struct: true
 
     embeds_many :member_list, ClanMember, on_replace: :delete
 

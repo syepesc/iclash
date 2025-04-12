@@ -6,9 +6,9 @@ defmodule Iclash.Repo.Migrations.AddClansTable do
       add :tag, :string, primary_key: true
       add :name, :string, null: false
       add :type, :string, null: false
-      add :description, :string, null: false
+      add :description, :string
       add :clan_level, :integer, null: false
-      add :war_frequency, :string, null: false
+      add :war_frequency, :string
       add :war_win_streak, :integer, null: false
       add :war_wins, :integer, null: false
       add :war_ties, :integer, null: false

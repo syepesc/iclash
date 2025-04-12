@@ -13,6 +13,5 @@ defmodule Iclash.Repo.Embeds.ClanLocation do
   def changeset(%__MODULE__{} = country, attrs \\ %{}) do
     country
     |> cast(attrs, [:id, :name])
-    |> validate_required([:id, :name])
   end
 end

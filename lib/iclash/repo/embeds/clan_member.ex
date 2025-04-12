@@ -19,9 +19,9 @@ defmodule Iclash.Repo.Embeds.ClanMember do
     field :tag, :string
     field :name, :string
     field :role, ClanRole
-    field :donations, :integer
-    field :donations_received, :integer
-    field :trophies, :integer
+    field :donations, :integer, default: 0
+    field :donations_received, :integer, default: 0
+    field :trophies, :integer, default: 0
     field :clan_rank, :integer
   end
 

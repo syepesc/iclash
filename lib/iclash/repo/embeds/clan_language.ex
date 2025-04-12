@@ -13,6 +13,5 @@ defmodule Iclash.Repo.Embeds.ClanLanguage do
   def changeset(%__MODULE__{} = language, attrs \\ %{}) do
     language
     |> cast(attrs, [:id, :name])
-    |> validate_required([:id, :name])
   end
 end
