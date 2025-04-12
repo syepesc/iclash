@@ -1,6 +1,8 @@
 defmodule Iclash.ClashApi do
   @moduledoc """
   Clash of Clans API Behaviour
+
+  TODO: Create struct for functions that returns `{:ok, any()}`.
   """
 
   use Knigge,
@@ -24,6 +26,12 @@ defmodule Iclash.ClashApi do
               | {:ok, :war_log_private}
               | http_error()
               | network_error()
+
+  @callback fetch_locations() ::
+              {:ok, any()} | http_error() | network_error()
+
+  @callback fetch_ranking_for_location(location_id :: integer()) ::
+              {:ok, any()} | http_error() | network_error()
 end
 
 defmodule Iclash.ClashApi.ClientImpl do
@@ -93,6 +101,31 @@ defmodule Iclash.ClashApi.ClientImpl do
         # This bubbles-up the returns from make_request/1.
         error
     end
+  end
+
+  def fetch_locations() do
+    {:ok, body} =
+      base_request()
+      |> Req.merge(
+        url: "/locations",
+        params: [limit: 500]
+      )
+      |> make_request()
+
+    {:ok, body}
+  end
+
+  def fetch_ranking_for_location(location_id) do
+    {:ok, body} =
+      base_request()
+      |> Req.merge(
+        url: "/locations/:location_id/rankings/clans",
+        path_params: [location_id: location_id],
+        params: [limit: 500]
+      )
+      |> make_request()
+
+    {:ok, body}
   end
 
   defp api_token, do: Application.fetch_env!(:iclash, ClashApiConfig)[:api_token]
