@@ -1,6 +1,4 @@
 defmodule Iclash.Application do
-  # See https://hexdocs.pm/elixir/Application.html
-  # for more information on OTP Applications
   @moduledoc false
 
   use Application
@@ -12,11 +10,9 @@ defmodule Iclash.Application do
       Iclash.Repo,
       {DNSCluster, query: Application.get_env(:iclash, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Iclash.PubSub},
-      # Start the Finch HTTP client for sending emails
       {Finch, name: Iclash.Finch},
-      # Start a worker by calling: Iclash.Worker.start_link(arg)
-      # {Iclash.Worker, arg},
-      # Start to serve requests, typically the last entry
+      {Iclash.Supervisors.DataFetcher, []},
+      # Start to serve requests, typically the child
       IclashWeb.Endpoint
     ]
 
