@@ -58,6 +58,8 @@ defmodule Iclash.Workers.ClanWarFetcher do
         {:noreply, clan_tag}
 
       {:ok, :war_log_private} ->
+        # Schedule next fetch, maybe clan will public their war log in the future
+        schedule_fetch(clan_tag)
         {:noreply, clan_tag}
 
       error ->
@@ -75,17 +77,25 @@ defmodule Iclash.Workers.ClanWarFetcher do
   end
 
   defp schedule_fetch_when_war_ends(%ClanWarSchema{} = clan_war) do
-    fetch_in =
+    war_end_time_from_now =
       clan_war.end_time
       |> DateTime.diff(DateTime.utc_now(), :millisecond)
-      # Adding 5 minutes will include attacks made at the last second of the war.
-      |> Kernel.+(:timer.minutes(5))
 
-    Logger.info(
-      "Scheduling next clan war data fetch when war ends in #{fetch_in}ms for clan: #{clan_war.clan_tag}."
-    )
+    if war_end_time_from_now <= 0 do
+      # War already ended, fetch again in the next iteration
+      schedule_fetch(clan_war.clan_tag)
+    else
+      # War is ongoing, fetch when it ends and add 5 minutes to include attacks made at the last second of the war
+      fetch_in =
+        war_end_time_from_now
+        |> Kernel.+(:timer.minutes(5))
 
-    Process.send_after(self(), :fetch_and_persist_clan_war, fetch_in)
+      Logger.info(
+        "Scheduling next clan war data fetch when war ends in #{fetch_in}ms for clan: #{clan_war.clan_tag}."
+      )
+
+      Process.send_after(self(), :fetch_and_persist_clan_war, fetch_in)
+    end
   end
 
   defp schedule_fetch(clan_tag) do
