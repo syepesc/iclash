@@ -134,6 +134,9 @@ defmodule Iclash.ClashApi.ClientImpl do
   defp base_request() do
     Req.new(
       retry: :transient,
+      # This is a lot of retries, however, due to the vast amount of requests that can be made to the Clash API,
+      # it is better to have a higher retry count to avoid rate limiting and data-fetchers process termination.
+      max_retries: 10,
       auth: {:bearer, api_token()},
       base_url: base_url(),
       # Transform keys from CamelCase/camelCase to snake_case.
