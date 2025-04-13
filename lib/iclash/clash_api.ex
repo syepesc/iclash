@@ -188,14 +188,19 @@ defmodule Iclash.ClashApi.ClientImpl do
       body
       |> Map.get("legend_statistics", %{})
       |> Map.get("current_season", %{})
-      |> Map.put("id", "#{current_year}-#{current_month}")
+      |> case do
+        %{} -> %{}
+        current_season -> Map.put(current_season, "id", "#{current_year}-#{current_month}")
+      end
 
     previous_season =
       body
       |> Map.get("legend_statistics", %{})
       |> Map.get("previous_season", %{})
 
-    Map.put(body, "legend_statistics", [current_season, previous_season])
+    legend_statistics = [current_season, previous_season] |> Enum.reject(&(&1 == %{}))
+
+    Map.put(body, "legend_statistics", legend_statistics)
   end
 
   defp transform_date_into_datetime_struct(body) do
