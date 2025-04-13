@@ -38,7 +38,15 @@ defmodule Iclash.Workers.DataFetcherSeeder do
     # SYEPESC:
     "#QPPJLQUU",
     # SYEPESC III:
-    "#P9LR2LY02"
+    "#P9LR2LY02",
+    # ANGELO,
+    "#2YGCUJYY",
+    # TOPO,
+    "#QO2RU2UY",
+    # DOMINATOR
+    "#2LGQRYPV",
+    # TIG28
+    "#8YYCVV2OC"
   ]
 
   def start_link(_args) do
@@ -64,6 +72,7 @@ defmodule Iclash.Workers.DataFetcherSeeder do
 
     init_clan_fetcher_workers(clan_tags)
     init_clan_war_fetcher_workers(clan_tags)
+    # We only fill known players, the rest are fetched by the clan fetcher process
     init_player_fetcher_workers(@known_players)
     {:ok, %{}}
   end
