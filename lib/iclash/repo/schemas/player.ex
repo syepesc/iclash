@@ -36,12 +36,12 @@ defmodule Iclash.Repo.Schemas.Player do
   schema "players" do
     field :name, :string
     field :town_hall_level, :integer
-    field :trophies, :integer
-    field :best_trophies, :integer
-    field :war_stars, :integer
-    field :attack_wins, :integer
-    field :defense_wins, :integer
-    field :exp_level, :integer
+    field :trophies, :integer, default: 0
+    field :best_trophies, :integer, default: 0
+    field :war_stars, :integer, default: 0
+    field :attack_wins, :integer, default: 0
+    field :defense_wins, :integer, default: 0
+    field :exp_level, :integer, default: 0
     field :role, ClanRole
     field :war_preference, WarPreference
 

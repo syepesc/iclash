@@ -22,6 +22,10 @@ defmodule Iclash.Repo.Enums.WarPreference do
     |> cast()
   end
 
+  def cast(value) when is_nil(value) do
+    {:ok, :out}
+  end
+
   def cast(value) do
     {:error,
      message:

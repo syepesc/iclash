@@ -22,6 +22,10 @@ defmodule Iclash.Repo.Enums.ClanRole do
     |> cast()
   end
 
+  def cast(value) when is_nil(value) do
+    {:ok, :not_member}
+  end
+
   def cast(value) do
     {:error,
      message:
