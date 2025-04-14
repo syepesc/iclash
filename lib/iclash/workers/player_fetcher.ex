@@ -50,7 +50,7 @@ defmodule Iclash.Workers.PlayerFetcher do
   def handle_info(:fetch_and_persist_player, player_tag) do
     with {:ok, %PlayerSchema{} = fetched_player} <- ClashApi.fetch_player(player_tag),
          {:ok, _player} <- Player.upsert_player(fetched_player) do
-      schedule_fetch(player_tag)
+      schedule_next_fetch(player_tag)
       {:noreply, player_tag}
     else
       error ->
@@ -67,7 +67,7 @@ defmodule Iclash.Workers.PlayerFetcher do
     {:via, Registry, {Iclash.Registry.DataFetcher, player_tag}}
   end
 
-  defp schedule_fetch(player_tag) do
+  defp schedule_next_fetch(player_tag) do
     Logger.info("Scheduling next player fetch in #{@fetch_timer}ms. player_tag=#{player_tag}")
     Process.send_after(self(), :fetch_and_persist_player, @fetch_timer)
   end

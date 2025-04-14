@@ -21,7 +21,6 @@ defmodule Iclash.Workers.DataFetcherSeeder do
   use GenServer
   alias Iclash.ClashApi
   alias Iclash.Workers.ClanFetcher
-  alias Iclash.Workers.ClanWarFetcher
   alias Iclash.Workers.PlayerFetcher
   require Logger
 
@@ -71,8 +70,9 @@ defmodule Iclash.Workers.DataFetcherSeeder do
       |> Enum.uniq()
 
     init_clan_fetcher_workers(clan_tags)
-    init_clan_war_fetcher_workers(clan_tags)
-    # We only fill known players, the rest are fetched by the clan fetcher process
+
+    # Here we only fetch known players, because the top clans might not include them.
+    # The rest of players and clan wars fetch are delegated by the clan fetcher process.
     init_player_fetcher_workers(@known_players)
     {:ok, %{}}
   end
@@ -80,12 +80,6 @@ defmodule Iclash.Workers.DataFetcherSeeder do
   defp init_clan_fetcher_workers(clan_tags) do
     Enum.each(clan_tags, fn clan_tag ->
       DynamicSupervisor.start_child(DynamicSupervisor.ClanFetcher, {ClanFetcher, clan_tag})
-    end)
-  end
-
-  defp init_clan_war_fetcher_workers(clan_tags) do
-    Enum.each(clan_tags, fn clan_tag ->
-      DynamicSupervisor.start_child(DynamicSupervisor.ClanWarFetcher, {ClanWarFetcher, clan_tag})
     end)
   end
 

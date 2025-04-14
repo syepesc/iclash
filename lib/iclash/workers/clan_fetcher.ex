@@ -1,27 +1,23 @@
 defmodule Iclash.Workers.ClanFetcher do
   @moduledoc """
-  A GenServer worker responsible for periodically fetching and updating clan data.
+  A GenServer worker responsible for fetching and updating clan data periodically.
 
-  This module is designed to handle the retrieval of clan information from an external API
-  and ensure that the data is persisted in the system.
+  This module retrieves clan information from an external API, persists it in the database, and schedules future updates.
+  It also delegates tasks like fetching player and clan war data to other workers.
 
-  It operates on a scheduled basis, fetching data at regular intervals, and is capable of handling
-  failures gracefully through a transient restart strategy.
+  ## Key Features
 
-  ## Responsibilities
+  - **Clan Data Fetching**: Fetches clan details using the provided clan tag.
+  - **Data Persistence**: Ensures fetched data is upserted into the database.
+  - **Task Delegation**: Delegates fetching of player and clan war data to specialized workers.
+  - **Scheduling**: Automatically schedules periodic updates for continuous data freshness.
+  - **Error Handling**: Logs errors and terminates gracefully, leveraging a transient restart strategy for recovery.
 
-  - **Clan Data Fetching**: Retrieves clan information from the external Clash API using the provided clan tag.
-  - **Data Persistence**: Ensures that the fetched clan data is upserted into the system's database, keeping the information up-to-date.
-  - **Scheduling**: Automatically schedules the next fetch operation after completing the current one, ensuring continuous updates.
-  - **Error Handling**: Logs errors and terminates the process gracefully in case of failures, allowing the supervisor to restart it as needed.
-  - **Player Data Delegation**: After fetching clan data, delegates the task of fetching player data for all clan members to other workers.
+  ## Design Highlights
 
-  ## Design Considerations
-
-  - **Transient Restart Strategy**: The worker uses a `:transient` restart strategy, meaning it will only be restarted if it terminates abnormally. This prevents infinite restart loops in case of persistent errors.
-  - **Registry Integration**: Each worker is registered with a unique identifier (clan tag) in the `Iclash.Registry.DataFetcher`, enabling efficient process lookup and communication.
-  - **Scalability**: The design allows for multiple `ClanFetcher` workers to run concurrently, each handling a different clan, making the system scalable for large numbers of clans.
-  - **Hibernation (Future Consideration)**: See TODO below.
+  - **Transient Restart**: Restarts only on abnormal termination to avoid infinite loops.
+  - **Registry Integration**: Uses `Iclash.Registry.DataFetcher` for unique worker identification and process lookup.
+  - **API Load Management**: Introduces staggered delays when scheduling player data fetches to prevent API overload.
 
   TODO: The worker could be enhanced to hibernate during long idle periods to reduce memory usage. GenServer.start_link(..., hibernate_after: 5_000)
   """
@@ -30,6 +26,7 @@ defmodule Iclash.Workers.ClanFetcher do
   alias Iclash.ClashApi
   alias Iclash.DomainTypes.Clan
   alias Iclash.Repo.Schemas.Clan, as: ClanSchema
+  alias Iclash.Workers.ClanWarFetcher
   alias Iclash.Workers.PlayerFetcher
   require Logger
 
@@ -51,7 +48,8 @@ defmodule Iclash.Workers.ClanFetcher do
   def handle_info(:fetch_and_persist_clan, clan_tag) do
     with {:ok, %ClanSchema{} = fetched_clan} <- ClashApi.fetch_clan(clan_tag),
          {:ok, _clan} <- Clan.upsert_clan(fetched_clan) do
-      schedule_fetch(clan_tag)
+      schedule_next_fetch(clan_tag)
+      schedule_clan_war_fetch(clan_tag)
       schedule_players_fetch(fetched_clan.member_list)
       {:noreply, clan_tag}
     else
@@ -82,8 +80,22 @@ defmodule Iclash.Workers.ClanFetcher do
     {:via, Registry, {Iclash.Registry.DataFetcher, clan_tag}}
   end
 
+  defp schedule_clan_war_fetch(clan_tag) do
+    Logger.info("Delegating clan war fetch. clan_tag=#{clan_tag}")
+
+    case DynamicSupervisor.start_child(
+           DynamicSupervisor.ClanWarFetcher,
+           {ClanWarFetcher, clan_tag}
+         ) do
+      {:ok, _} -> {:noreply, clan_tag}
+      # Catches already started child, this should not generate any errors for the clan fetcher.
+      # Errors in the clan war fetcher should be handle there.
+      {:error, _} -> {:noreply, clan_tag}
+    end
+  end
+
   defp schedule_players_fetch(players) do
-    Logger.info("Delegating player data fetching for #{length(players)} clan members")
+    Logger.info("Delegating player fetch for #{length(players)} clan members")
 
     # To avoid overwhelming the Clash API with a large number of concurrent requests when fetching player data for all clan members,
     # we introduce a staggered delay. Each player's data fetch is scheduled with a slight delay, spreading out the requests over time.
@@ -95,7 +107,7 @@ defmodule Iclash.Workers.ClanFetcher do
     end)
   end
 
-  defp schedule_fetch(clan_tag) do
+  defp schedule_next_fetch(clan_tag) do
     Logger.info("Scheduling next clan fetch in #{@fetch_timer}ms. clan_tag=#{clan_tag}")
     Process.send_after(self(), :fetch_and_persist_clan, @fetch_timer)
   end
