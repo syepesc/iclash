@@ -31,7 +31,7 @@ defmodule Iclash.Workers.DataFetcherSeeder do
     # ATLIENS 2.0
     "#2QL9PRCPQ",
     # 51/50
-    "#2QVOOJJJG"
+    "#2QV00JJJG"
   ]
 
   @known_players [
@@ -42,11 +42,11 @@ defmodule Iclash.Workers.DataFetcherSeeder do
     # ANGELO,
     "#2YGCUJYY",
     # TOPO,
-    "#QO2RU2UY",
+    "#Q02RU2UY",
     # DOMINATOR
     "#2LGQRYPV",
     # TIG28
-    "#8YYCVV2OC"
+    "#8YYCVV20C"
   ]
 
   def start_link(_args) do
