@@ -42,8 +42,8 @@ defmodule Iclash.Repo.Schemas.Player do
     field :attack_wins, :integer, default: 0
     field :defense_wins, :integer, default: 0
     field :exp_level, :integer, default: 0
-    field :role, ClanRole
-    field :war_preference, WarPreference
+    field :role, ClanRole, default: :not_member
+    field :war_preference, WarPreference, default: :out
 
     # The `:on_delete` behaviour MUST be defined in the assoc migration using: references().
     has_many :heroes, Heroe,
