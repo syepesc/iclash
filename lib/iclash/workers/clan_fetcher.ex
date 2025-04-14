@@ -42,7 +42,7 @@ defmodule Iclash.Workers.ClanFetcher do
 
   @impl true
   def init(clan_tag) do
-    Logger.info("Init clan fetcher process for clan: #{clan_tag}")
+    Logger.info("Init clan fetcher process. clan_tag=#{clan_tag}")
     Process.send(self(), :fetch_and_persist_clan, [])
     {:ok, clan_tag}
   end
@@ -57,7 +57,7 @@ defmodule Iclash.Workers.ClanFetcher do
     else
       error ->
         Logger.error(
-          "Terminating clan fetcher process. pid=#{inspect(self())} error=#{inspect(error)}"
+          "Terminating clan fetcher process. pid=#{inspect(self())} clan_tag=#{clan_tag} error=#{inspect(error)}"
         )
 
         # Set new state to the error so it can be identify in the observer cli process state
@@ -83,7 +83,7 @@ defmodule Iclash.Workers.ClanFetcher do
   end
 
   defp schedule_players_fetch(players) do
-    Logger.info("Delegating Player data fetching for #{length(players)} clan members.")
+    Logger.info("Delegating player data fetching for #{length(players)} clan members")
 
     # To avoid overwhelming the Clash API with a large number of concurrent requests when fetching player data for all clan members,
     # we introduce a staggered delay. Each player's data fetch is scheduled with a slight delay, spreading out the requests over time.
@@ -96,7 +96,7 @@ defmodule Iclash.Workers.ClanFetcher do
   end
 
   defp schedule_fetch(clan_tag) do
-    Logger.info("Scheduling next data fetch in #{@fetch_timer}ms for clan: #{clan_tag}.")
+    Logger.info("Scheduling next clan fetch in #{@fetch_timer}ms. clan_tag=#{clan_tag}")
     Process.send_after(self(), :fetch_and_persist_clan, @fetch_timer)
   end
 end

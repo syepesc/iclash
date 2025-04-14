@@ -87,14 +87,14 @@ defmodule Iclash.ClashApi.ClientImpl do
           |> Map.put("war_type", "clan_war")
           |> ClanWar.from_map()
         else
-          Logger.info("Skipping, no current war found for clan with tag #{clan_tag}.")
+          Logger.info("Skipping, clan is not currently in war. clan_tag=#{clan_tag}")
           {:ok, :not_in_war}
         end
 
       # Specific error handling when clans have their war log private.
       # This error handling came from previous experiences querying the ClashAPI - not confirmed with the official docs yet.
       {:error, {:http_error, %Req.Response{status: 403}}} ->
-        Logger.info("Clan tag #{clan_tag} has Private War Log.")
+        Logger.info("Skipping, clan war log is private. clan_tag=#{clan_tag}")
         {:ok, :war_log_private}
 
       error ->
@@ -146,7 +146,7 @@ defmodule Iclash.ClashApi.ClientImpl do
 
   defp make_request(%Req.Request{} = req) do
     Logger.info(
-      "Clash API request attempt. url=#{req.url} params=#{inspect(Map.get(req.options, :params))} path_params=#{inspect(Map.get(req.options, :path_params))}"
+      "Clash api request attempt. url=#{req.url} params=#{inspect(Map.get(req.options, :params))} path_params=#{inspect(Map.get(req.options, :path_params))}"
     )
 
     case Req.get(req) do
@@ -154,7 +154,7 @@ defmodule Iclash.ClashApi.ClientImpl do
         {:ok, response.body}
 
       {:ok, %Req.Response{status: _} = reason} ->
-        Logger.warning("HTTP request error. error=#{inspect(reason)} request=#{inspect(req)}")
+        Logger.warning("Http error. error=#{inspect(reason)} request=#{inspect(req)}")
         {:error, {:http_error, reason}}
 
       {:error, reason} ->

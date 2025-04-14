@@ -116,7 +116,11 @@ defmodule Iclash.Repo.Schemas.Player do
 
       false ->
         errors = ChagesetUtils.errors_on(changeset)
-        Logger.error("Error parsing player to struct. errors=#{inspect(errors)}")
+
+        Logger.error(
+          "Error parsing player to struct. errors=#{inspect(errors)} player=#{inspect(player)}"
+        )
+
         {:error, errors}
     end
   end

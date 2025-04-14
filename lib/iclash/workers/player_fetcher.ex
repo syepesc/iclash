@@ -41,7 +41,7 @@ defmodule Iclash.Workers.PlayerFetcher do
 
   @impl true
   def init(player_tag) do
-    Logger.info("Init player fetcher process for player: #{player_tag}")
+    Logger.info("Init player fetcher process. player_tag=#{player_tag}")
     Process.send(self(), :fetch_and_persist_player, [])
     {:ok, player_tag}
   end
@@ -55,7 +55,7 @@ defmodule Iclash.Workers.PlayerFetcher do
     else
       error ->
         Logger.error(
-          "Terminating player fetcher process. pid=#{inspect(self())} error=#{inspect(error)}"
+          "Terminating player fetcher process. pid=#{inspect(self())} player_tag=#{player_tag} error=#{inspect(error)}"
         )
 
         # Set new state to the error so it can be identify in the observer cli process state
@@ -68,7 +68,7 @@ defmodule Iclash.Workers.PlayerFetcher do
   end
 
   defp schedule_fetch(player_tag) do
-    Logger.info("Scheduling next data fetch in #{@fetch_timer}ms for player: #{player_tag}.")
+    Logger.info("Scheduling next player fetch in #{@fetch_timer}ms. player_tag=#{player_tag}")
     Process.send_after(self(), :fetch_and_persist_player, @fetch_timer)
   end
 end

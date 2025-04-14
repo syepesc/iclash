@@ -66,7 +66,10 @@ defmodule Iclash.DomainTypes.Player do
         {:ok, get_player(player.tag)}
 
       {:error, reason} ->
-        Logger.error("Transaction error, failed to upsert player. error=#{inspect(reason)}")
+        Logger.error(
+          "Transaction failed to upsert player. error=#{inspect(reason)} player_tag=#{player.tag}"
+        )
+
         {:error, reason}
     end
   end

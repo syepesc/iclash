@@ -82,7 +82,11 @@ defmodule Iclash.Repo.Schemas.ClanWarAttack do
 
       false ->
         errors = ChagesetUtils.errors_on(changeset)
-        Logger.error("Error parsing Clan War Attack to struct. errors=#{inspect(errors)}")
+
+        Logger.error(
+          "Error parsing clan war attack to struct. errors=#{inspect(errors)} clan_war_attack=#{inspect(clan_war_attack)}"
+        )
+
         {:error, errors}
     end
   end

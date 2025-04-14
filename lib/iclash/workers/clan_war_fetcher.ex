@@ -40,7 +40,7 @@ defmodule Iclash.Workers.ClanWarFetcher do
 
   @impl true
   def init(clan_tag) do
-    Logger.info("Init clan war fetcher process for clan: #{clan_tag}")
+    Logger.info("Init clan war fetcher process. clan_tag=#{clan_tag}")
     Process.send(self(), :fetch_and_persist_clan_war, [])
     {:ok, clan_tag}
   end
@@ -64,7 +64,7 @@ defmodule Iclash.Workers.ClanWarFetcher do
 
       error ->
         Logger.error(
-          "Terminating Clan War Fetcher process. pid=#{inspect(self())} error=#{inspect(error)}"
+          "Terminating clan war fetcher process. pid=#{inspect(self())} clan_tag=#{clan_tag} error=#{inspect(error)}"
         )
 
         # Set new state to the error so it can be identify in the observer cli process state
@@ -91,7 +91,7 @@ defmodule Iclash.Workers.ClanWarFetcher do
         |> Kernel.+(:timer.minutes(5))
 
       Logger.info(
-        "Scheduling next clan war data fetch when war ends in #{fetch_in}ms for clan: #{clan_war.clan_tag}."
+        "Scheduling next clan war fetch when war ends in #{fetch_in}ms. clan_tag=#{clan_war.clan_tag}"
       )
 
       Process.send_after(self(), :fetch_and_persist_clan_war, fetch_in)
@@ -99,7 +99,7 @@ defmodule Iclash.Workers.ClanWarFetcher do
   end
 
   defp schedule_fetch(clan_tag) do
-    Logger.info("Scheduling next clan war data fetch in #{@fetch_timer}ms for clan: #{clan_tag}.")
+    Logger.info("Scheduling next clan war fetch in #{@fetch_timer}ms. clan_tag=#{clan_tag}")
     Process.send_after(self(), :fetch_and_persist_clan_war, @fetch_timer)
   end
 end
