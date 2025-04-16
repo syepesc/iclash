@@ -30,7 +30,10 @@ defmodule Iclash.ClashApi do
   @callback fetch_locations() ::
               {:ok, any()} | http_error() | network_error()
 
-  @callback fetch_ranking_for_location(location_id :: integer()) ::
+  @callback fetch_clan_ranking_by_location(location_id :: integer(), limit :: integer()) ::
+              {:ok, any()} | http_error() | network_error()
+
+  @callback fetch_player_ranking_by_location(location_id :: integer(), limit :: integer()) ::
               {:ok, any()} | http_error() | network_error()
 end
 
@@ -115,13 +118,26 @@ defmodule Iclash.ClashApi.ClientImpl do
     {:ok, body}
   end
 
-  def fetch_ranking_for_location(location_id) do
+  def fetch_clan_ranking_by_location(location_id, limit) do
     {:ok, body} =
       base_request()
       |> Req.merge(
         url: "/locations/:location_id/rankings/clans",
         path_params: [location_id: location_id],
-        params: [limit: 500]
+        params: [limit: limit]
+      )
+      |> make_request()
+
+    {:ok, body}
+  end
+
+  def fetch_player_ranking_by_location(location_id, limit) do
+    {:ok, body} =
+      base_request()
+      |> Req.merge(
+        url: "/locations/:location_id/rankings/players",
+        path_params: [location_id: location_id],
+        params: [limit: limit]
       )
       |> make_request()
 
@@ -133,10 +149,8 @@ defmodule Iclash.ClashApi.ClientImpl do
 
   defp base_request() do
     Req.new(
-      retry: :transient,
-      # This is a lot of retries, however, due to the vast amount of requests that can be made to the Clash API,
-      # it is better to have a higher retry count to avoid rate limiting and data-fetchers process termination.
-      max_retries: 10,
+      retry: :safe_transient,
+      max_retries: 5,
       auth: {:bearer, api_token()},
       base_url: base_url(),
       # Transform keys from CamelCase/camelCase to snake_case.
