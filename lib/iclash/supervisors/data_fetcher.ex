@@ -30,9 +30,9 @@ defmodule Iclash.Supervisors.DataFetcher do
   def init(:ok) do
     children = [
       {Registry, name: Iclash.Registry.DataFetcher, keys: :unique},
-      {DynamicSupervisor, name: DynamicSupervisor.ClanFetcher, strategy: :one_for_one},
-      {DynamicSupervisor, name: DynamicSupervisor.ClanWarFetcher, strategy: :one_for_one},
-      {DynamicSupervisor, name: DynamicSupervisor.PlayerFetcher, strategy: :one_for_one},
+      {Iclash.Workers.ClanFetcher, []},
+      {Iclash.Workers.ClanWarFetcher, []},
+      {Iclash.Workers.PlayerFetcher, []},
       {Iclash.Workers.DataFetcherSeeder, []}
     ]
 

@@ -22,93 +22,116 @@ defmodule Iclash.Workers.ClanFetcher do
   TODO: The worker could be enhanced to hibernate during long idle periods to reduce memory usage. GenServer.start_link(..., hibernate_after: 5_000)
   """
 
-  use GenServer, restart: :transient
+  use GenServer
   alias Iclash.ClashApi
   alias Iclash.DomainTypes.Clan
   alias Iclash.Repo.Schemas.Clan, as: ClanSchema
-  alias Iclash.Workers.ClanWarFetcher
   alias Iclash.Workers.PlayerFetcher
   require Logger
 
-  # I consider that 48 hours is a reasonable fetch interval for clan data, a good minimum could be 24h.
-  @fetch_timer :timer.hours(48)
+  @type state :: %{
+          clan_tag: String.t(),
+          fetch_attempts: integer(),
+          failed_fetch_attempts: integer(),
+          last_fetched_at: DateTime.t(),
+          meta: ClanSchema.t() | {:error, any()}
+        }
 
-  def start_link(clan_tag) do
-    GenServer.start_link(__MODULE__, clan_tag, name: via("clan_fetcher_#{clan_tag}"))
+  @init_state %{
+    clan_tag: nil,
+    fetch_attempts: 0,
+    failed_fetch_attempts: 0,
+    last_fetched_at: nil,
+    meta: nil
+  }
+
+  def start_link(_args) do
+    GenServer.start_link(__MODULE__, :ok, name: via())
   end
 
   @impl true
-  def init(clan_tag) do
-    Logger.info("Init clan fetcher process. clan_tag=#{clan_tag}")
-    Process.send(self(), :fetch_and_persist_clan, [])
-    {:ok, clan_tag}
+  def init(:ok) do
+    Logger.info("Init clan fetcher process")
+    {:ok, @init_state}
   end
 
   @impl true
-  def handle_info(:fetch_and_persist_clan, clan_tag) do
+  def handle_cast({:fetch_and_persist_clan, _clan_tag} = msg, state) do
+    # Delegate the actual work to the `handle_info/2` callback, this is not idiomatically.
+    # However, this ensures that any retry logic or additional handling is centralized,
+    # avoiding duplication of logic and maintaining a single source of truth.
+    Process.send(self(), msg, [])
+    {:noreply, state}
+  end
+
+  @impl true
+  def handle_info({:fetch_and_persist_clan, clan_tag}, state) do
     with {:ok, %ClanSchema{} = fetched_clan} <- ClashApi.fetch_clan(clan_tag),
          {:ok, _clan} <- Clan.upsert_clan(fetched_clan) do
+      new_state =
+        %{
+          state
+          | clan_tag: clan_tag,
+            fetch_attempts: state.fetch_attempts + 1,
+            last_fetched_at: DateTime.utc_now(),
+            meta: fetched_clan
+        }
+
       schedule_next_fetch(clan_tag)
-      schedule_clan_war_fetch(clan_tag)
       schedule_players_fetch(fetched_clan.member_list)
-      {:noreply, clan_tag}
+      {:noreply, new_state}
     else
-      error ->
-        Logger.error(
-          "Terminating clan fetcher process. pid=#{inspect(self())} clan_tag=#{clan_tag} error=#{inspect(error)}"
+      {:error, {:http_error, %Req.Response{status: 429}} = reason} ->
+        # Try again after req library exhausts its retries set on ClashApi.make_request/1
+        # This will start a loop of retries between this process and req library.
+        Logger.info(
+          "Exhaust req library configured retries, sending message back to process #{inspect(self())}. clan_tag=#{clan_tag}"
         )
 
-        # Set new state to the error so it can be identify in the observer cli process state
-        {:noreply, error}
+        Process.send(self(), {:fetch_and_persist_clan, clan_tag}, [])
+
+        new_state =
+          %{
+            state
+            | clan_tag: clan_tag,
+              failed_fetch_attempts: state.failed_fetch_attempts + 1,
+              last_fetched_at: DateTime.utc_now(),
+              meta: {:error, reason}
+          }
+
+        {:noreply, new_state}
+
+      reason ->
+        Logger.error(
+          "Error in clan fetcher process. pid=#{inspect(self())} clan_tag=#{clan_tag} error=#{inspect(reason)}"
+        )
+
+        new_state =
+          %{
+            state
+            | clan_tag: clan_tag,
+              failed_fetch_attempts: state.failed_fetch_attempts + 1,
+              last_fetched_at: DateTime.utc_now(),
+              meta: {:error, reason}
+          }
+
+        {:noreply, new_state}
     end
   end
 
-  @impl true
-  def handle_info({:fetch_and_persist_player, player_tag}, clan_tag) do
-    case DynamicSupervisor.start_child(
-           DynamicSupervisor.PlayerFetcher,
-           {PlayerFetcher, player_tag}
-         ) do
-      {:ok, _} -> {:noreply, clan_tag}
-      # Catches already started child, this should not generate any errors for the clan fetcher.
-      # Errors in the player fetcher should be handle there.
-      {:error, _} -> {:noreply, clan_tag}
-    end
-  end
-
-  def via(clan_tag) do
-    {:via, Registry, {Iclash.Registry.DataFetcher, clan_tag}}
-  end
-
-  defp schedule_clan_war_fetch(clan_tag) do
-    Logger.info("Delegating clan war fetch. clan_tag=#{clan_tag}")
-
-    case DynamicSupervisor.start_child(
-           DynamicSupervisor.ClanWarFetcher,
-           {ClanWarFetcher, clan_tag}
-         ) do
-      {:ok, _} -> {:noreply, clan_tag}
-      # Catches already started child, this should not generate any errors for the clan fetcher.
-      # Errors in the clan war fetcher should be handle there.
-      {:error, _} -> {:noreply, clan_tag}
-    end
+  def via() do
+    {:via, Registry, {Iclash.Registry.DataFetcher, :clan_fetcher}}
   end
 
   defp schedule_players_fetch(players) do
     Logger.info("Delegating player fetch for #{length(players)} clan members")
-
-    # To avoid overwhelming the Clash API with a large number of concurrent requests when fetching player data for all clan members,
-    # we introduce a staggered delay. Each player's data fetch is scheduled with a slight delay, spreading out the requests over time.
-    # This approach ensures a more controlled and gradual load on the API.
-    players
-    |> Enum.with_index(1)
-    |> Enum.each(fn {player, i} ->
-      Process.send_after(self(), {:fetch_and_persist_player, player.tag}, :timer.seconds(i))
-    end)
+    Enum.each(players, &GenServer.cast(PlayerFetcher.via(), {:fetch_and_persist_player, &1.tag}))
   end
 
   defp schedule_next_fetch(clan_tag) do
-    Logger.info("Scheduling next clan fetch in #{@fetch_timer}ms. clan_tag=#{clan_tag}")
-    Process.send_after(self(), :fetch_and_persist_clan, @fetch_timer)
+    # I consider that 48 hours is a reasonable fetch interval for clan data, a good minimum could be 24h.
+    fetch_in = :timer.hours(48)
+    Logger.info("Scheduling next clan fetch in #{fetch_in}ms. clan_tag=#{clan_tag}")
+    Process.send_after(self(), {:fetch_and_persist_clan, clan_tag}, fetch_in)
   end
 end

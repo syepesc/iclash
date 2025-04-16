@@ -26,49 +26,109 @@ defmodule Iclash.Workers.PlayerFetcher do
   TODO: The worker could be enhanced to hibernate during long idle periods to reduce memory usage. GenServer.start_link(..., hibernate_after: 5_000)
   """
 
-  use GenServer, restart: :transient
+  use GenServer
   alias Iclash.ClashApi
-  alias Iclash.Repo.Schemas.Player, as: PlayerSchema
   alias Iclash.DomainTypes.Player
+  alias Iclash.Repo.Schemas.Player, as: PlayerSchema
   require Logger
 
-  # I consider that 24 hours is a reasonable fetch interval for player data
-  @fetch_timer :timer.hours(24)
+  @type state :: %{
+          player_tag: String.t(),
+          fetch_attempts: integer(),
+          failed_fetch_attempts: integer(),
+          last_fetched_at: DateTime.t(),
+          meta: PlayerSchema.t() | {:error, any()}
+        }
 
-  def start_link(player_tag) do
-    GenServer.start_link(__MODULE__, player_tag, name: via("player_fetcher_#{player_tag}"))
+  @init_state %{
+    player_tag: nil,
+    fetch_attempts: 0,
+    failed_fetch_attempts: 0,
+    last_fetched_at: nil,
+    meta: nil
+  }
+
+  def start_link(_args) do
+    GenServer.start_link(__MODULE__, :ok, name: via())
   end
 
   @impl true
-  def init(player_tag) do
-    Logger.info("Init player fetcher process. player_tag=#{player_tag}")
-    Process.send(self(), :fetch_and_persist_player, [])
-    {:ok, player_tag}
+  def init(:ok) do
+    Logger.info("Init player fetcher process")
+    {:ok, @init_state}
   end
 
   @impl true
-  def handle_info(:fetch_and_persist_player, player_tag) do
+  def handle_cast({:fetch_and_persist_player, _player_tag} = msg, state) do
+    # Delegate the actual work to the `handle_info/2` callback, this is not idiomatically.
+    # However, this ensures that any retry logic or additional handling is centralized,
+    # avoiding duplication of logic and maintaining a single source of truth.
+    Process.send(self(), msg, [])
+    {:noreply, state}
+  end
+
+  @impl true
+  def handle_info({:fetch_and_persist_player, player_tag}, state) do
     with {:ok, %PlayerSchema{} = fetched_player} <- ClashApi.fetch_player(player_tag),
          {:ok, _player} <- Player.upsert_player(fetched_player) do
+      new_state =
+        %{
+          state
+          | player_tag: player_tag,
+            fetch_attempts: state.fetch_attempts + 1,
+            last_fetched_at: DateTime.utc_now(),
+            meta: fetched_player
+        }
+
       schedule_next_fetch(player_tag)
-      {:noreply, player_tag}
+      {:noreply, new_state}
     else
-      error ->
-        Logger.error(
-          "Terminating player fetcher process. pid=#{inspect(self())} player_tag=#{player_tag} error=#{inspect(error)}"
+      {:error, {:http_error, %Req.Response{status: 429}} = reason} ->
+        # Try again after req library exhausts its retries set on ClashApi.make_request/1
+        # This will start a loop of retries between this process and req library.
+        Logger.info(
+          "Exhaust req library configured retries, sending message back to process #{inspect(self())}. player_tag=#{player_tag}"
         )
 
-        # Set new state to the error so it can be identify in the observer cli process state
-        {:noreply, error}
+        Process.send(self(), {:fetch_and_persist_player, player_tag}, [])
+
+        new_state =
+          %{
+            state
+            | player_tag: player_tag,
+              failed_fetch_attempts: state.failed_fetch_attempts + 1,
+              last_fetched_at: DateTime.utc_now(),
+              meta: {:error, reason}
+          }
+
+        {:noreply, new_state}
+
+      reason ->
+        Logger.error(
+          "Error in player fetcher process. pid=#{inspect(self())} player_tag=#{player_tag} error=#{inspect(reason)}"
+        )
+
+        new_state =
+          %{
+            state
+            | player_tag: player_tag,
+              failed_fetch_attempts: state.failed_fetch_attempts + 1,
+              last_fetched_at: DateTime.utc_now(),
+              meta: {:error, reason}
+          }
+
+        {:noreply, new_state}
     end
   end
 
-  def via(player_tag) do
-    {:via, Registry, {Iclash.Registry.DataFetcher, player_tag}}
+  def via() do
+    {:via, Registry, {Iclash.Registry.DataFetcher, :player_fetcher}}
   end
 
   defp schedule_next_fetch(player_tag) do
-    Logger.info("Scheduling next player fetch in #{@fetch_timer}ms. player_tag=#{player_tag}")
-    Process.send_after(self(), :fetch_and_persist_player, @fetch_timer)
+    # I consider that 24 hours is a reasonable fetch interval for player data
+    fetch_in = :timer.hours(24)
+    Logger.info("Scheduling next player fetch in #{fetch_in}ms. player_tag=#{player_tag}")
+    Process.send_after(self(), {:fetch_and_persist_player, player_tag}, fetch_in)
   end
 end
