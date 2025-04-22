@@ -28,6 +28,20 @@ defmodule Iclash.DataFetcher.PlayerFetcher do
       schedule_next_fetch(player_tag)
       {:stop, :normal, player_tag}
     else
+      {:error, {:http_error, %Req.Response{status: 404}}} ->
+        # Do nothing if player not found.
+        {:stop, :normal, player_tag}
+
+      {:error, {:http_error, %Req.Response{status: 429}}} ->
+        # Try again after req library exhausts its retries set on ClashApi.make_request/1
+        # This will start a loop of retries between this process and req library.
+        Logger.info(
+          "Exhaust req library configured retries, sending message back to queue #{inspect(self())}. player_tag=#{player_tag}"
+        )
+
+        Queue.enqueue_player_fetch(player_tag, 5_000)
+        {:stop, :normal, player_tag}
+
       reason ->
         Logger.error(
           "Error in player fetcher process. pid=#{inspect(self())} player_tag=#{player_tag} error=#{inspect(reason)}"

@@ -1,4 +1,6 @@
 defmodule Iclash.DataFetcher.Supervisor do
+  @moduledoc false
+
   use Supervisor
 
   @rate_limit 80

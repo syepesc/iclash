@@ -39,6 +39,20 @@ defmodule Iclash.DataFetcher.ClanWarFetcher do
         schedule_next_fetch(clan_tag)
         {:stop, :normal, clan_tag}
 
+      {:error, {:http_error, %Req.Response{status: 404}}} ->
+        # Do nothing if clan war not found.
+        {:stop, :normal, clan_tag}
+
+      {:error, {:http_error, %Req.Response{status: 429}}} ->
+        # Try again after req library exhausts its retries set on ClashApi.make_request/1
+        # This will start a loop of retries between this process and req library.
+        Logger.info(
+          "Exhaust req library configured retries, sending message back to queue #{inspect(self())}. clan_tag=#{clan_tag}"
+        )
+
+        Queue.enqueue_clan_war_fetch(clan_tag, 5_000)
+        {:stop, :normal, clan_tag}
+
       reason ->
         Logger.error(
           "Error in clan war fetcher process. pid=#{inspect(self())} clan_tag=#{clan_tag} error=#{inspect(reason)}"

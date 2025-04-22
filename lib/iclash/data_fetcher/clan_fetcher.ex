@@ -30,6 +30,20 @@ defmodule Iclash.DataFetcher.ClanFetcher do
       schedule_players_fetch(fetched_clan.member_list)
       {:stop, :normal, clan_tag}
     else
+      {:error, {:http_error, %Req.Response{status: 404}}} ->
+        # Do nothing if clan not found.
+        {:stop, :normal, clan_tag}
+
+      {:error, {:http_error, %Req.Response{status: 429}}} ->
+        # Try again after req library exhausts its retries set on ClashApi.make_request/1
+        # This will start a loop of retries between this process and req library.
+        Logger.info(
+          "Exhaust req library configured retries, sending message back to queue #{inspect(self())}. clan_tag=#{clan_tag}"
+        )
+
+        Queue.enqueue_clan_fetch(clan_tag, 5_000)
+        {:stop, :normal, clan_tag}
+
       reason ->
         Logger.error(
           "Error in clan fetcher process. pid=#{inspect(self())} clan_tag=#{clan_tag} error=#{inspect(reason)}"
