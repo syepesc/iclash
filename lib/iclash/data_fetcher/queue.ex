@@ -1,6 +1,9 @@
 defmodule Iclash.DataFetcher.Queue do
   @moduledoc false
 
+  # TODO: Implement request steps (GenStage). Init by triggering @rate_limit requests, wait 1 second. Then, trigger next @rate_limit requests.
+  # TODO: Avoid queuing already queued clans, clan wars, and player.
+
   use GenServer
   alias Iclash.ClashApi
   alias Iclash.DataFetcher.ClanFetcher
