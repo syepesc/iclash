@@ -45,49 +45,34 @@ defmodule Iclash.DomainTypes.ClanWarTest do
 
   describe "get_clan_wars/1" do
     test "returns a list of clan wars", %{clan_war: clan_war} do
-      {:ok, _} = ClanWar.upsert_clan_war(clan_war)
+      :ok = ClanWar.upsert_clan_war(clan_war)
       clan_wars_form_db = ClanWar.get_clan_wars(clan_war.clan_tag)
       assert is_list(clan_wars_form_db)
     end
 
     test "returns multiple clan wars", %{clan_war: clan_war} do
-      {:ok, _} = ClanWar.upsert_clan_war(clan_war)
-      {:ok, _} = ClanWar.upsert_clan_war(Map.put(clan_war, :opponent, "#C3"))
+      :ok = ClanWar.upsert_clan_war(clan_war)
+      :ok = ClanWar.upsert_clan_war(Map.put(clan_war, :opponent, "#C3"))
       clan_wars_form_db = ClanWar.get_clan_wars(clan_war.clan_tag)
       assert length(clan_wars_form_db) == 2
     end
 
-    test "gets clan wars and return ClanWar structs", %{clan_war: clan_war} do
-      {:ok, inserted_clan_war} = ClanWar.upsert_clan_war(clan_war)
+    test "gets clan wars and return clan war structs", %{clan_war: clan_war} do
+      :ok = ClanWar.upsert_clan_war(clan_war)
       clan_wars_form_db = ClanWar.get_clan_wars(clan_war.clan_tag)
-      assert inserted_clan_war == clan_wars_form_db
+      assert %ClanWarSchema{} = hd(clan_wars_form_db)
     end
 
-    test "do not fetch clan_war's data from clash api if clan_war is found in db", %{
-      clan_war: clan_war
-    } do
-      MockClashApi |> expect(:fetch_current_war, 0, fn _ -> {:ok, clan_war} end)
-      {:ok, inserted_clan_war} = ClanWar.upsert_clan_war(clan_war)
-      clan_wars_form_db = ClanWar.get_clan_wars(clan_war.clan_tag)
-      assert inserted_clan_war == clan_wars_form_db
-    end
-
-    test "fetch clan_war's data from clash api if not found in db", %{clan_war: clan_war} do
-      MockClashApi |> expect(:fetch_current_war, fn _ -> {:ok, clan_war} end)
-      assert clan_war == ClanWar.get_clan_wars(clan_war.clan_tag)
-    end
-
-    test "return error tuple if not found in db and clash api", %{clan_war: clan_war} do
-      mock_response = {:error, {:http_error, %Req.Response{}}}
-      MockClashApi |> expect(:fetch_current_war, fn _ -> mock_response end)
+    test "return error tuple if not found in database", %{clan_war: clan_war} do
       assert {:error, :not_found} == ClanWar.get_clan_wars(clan_war.clan_tag)
     end
   end
 
   describe "upsert_clan_war/1" do
     test "creates a clan war", %{clan_war: clan_war} do
-      {:ok, clan_wars_form_db} = ClanWar.upsert_clan_war(clan_war)
-      assert clan_wars_form_db == ClanWar.get_clan_wars(clan_war.clan_tag)
+      :ok = ClanWar.upsert_clan_war(clan_war)
+      {:ok, [clan_wars_form_db]} = ClanWar.get_clan_wars(clan_war.clan_tag)
+      assert clan_wars_form_db.clan_tag == clan_war.clan_tag
     end
 
     test "updates a clan war updated_at and keeps inserted_at", %{clan_war: clan_war} do
@@ -101,8 +86,11 @@ defmodule Iclash.DomainTypes.ClanWarTest do
         |> Map.put(:updated_at, nil)
         |> Map.put(:insterted_at, nil)
 
-      {:ok, [clan_war_from_db]} = ClanWar.upsert_clan_war(clan_war)
-      {:ok, [updated_clan_war]} = ClanWar.upsert_clan_war(updated_clan_war)
+      :ok = ClanWar.upsert_clan_war(clan_war)
+      {:ok, [clan_war_from_db]} = ClanWar.get_clan_wars(clan_war)
+
+      :ok = ClanWar.upsert_clan_war(updated_clan_war)
+      {:ok, [updated_clan_war]} = ClanWar.get_clan_wars(updated_clan_war)
 
       assert clan_war_from_db.updated_at != updated_clan_war.updated_at
       assert clan_war_from_db.inserted_at == updated_clan_war.inserted_at
@@ -145,8 +133,12 @@ defmodule Iclash.DomainTypes.ClanWarTest do
         |> Map.put(:attacks, new_attacks)
         |> ClanWarSchema.from_map()
 
-      {:ok, _clan_war_from_db} = ClanWar.upsert_clan_war(clan_war)
-      {:ok, [updated_clan_wars]} = ClanWar.upsert_clan_war(updated_clan_war)
+      :ok = ClanWar.upsert_clan_war(clan_war)
+      {:ok, _} = ClanWar.get_clan_wars(clan_war)
+
+      :ok = ClanWar.upsert_clan_war(updated_clan_war)
+      {:ok, [updated_clan_wars]} = ClanWar.get_clan_wars(updated_clan_war)
+
       assert clan_war != updated_clan_wars
       assert length(updated_clan_wars.attacks) == 2
 
@@ -180,8 +172,11 @@ defmodule Iclash.DomainTypes.ClanWarTest do
         |> Map.put(:attacks, new_attacks)
         |> ClanWarSchema.from_map()
 
-      {:ok, _clan_war_from_db} = ClanWar.upsert_clan_war(clan_war)
-      {:ok, [updated_clan_wars]} = ClanWar.upsert_clan_war(updated_clan_war)
+      :ok = ClanWar.upsert_clan_war(clan_war)
+      {:ok, _} = ClanWar.get_clan_wars(clan_war)
+
+      :ok = ClanWar.upsert_clan_war(updated_clan_war)
+      {:ok, [updated_clan_wars]} = ClanWar.get_clan_wars(updated_clan_war)
 
       assert hd(updated_clan_wars.attacks).updated_at != updated_clan_wars.inserted_at
       assert hd(updated_clan_wars.attacks).inserted_at == updated_clan_wars.inserted_at

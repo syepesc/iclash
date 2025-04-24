@@ -57,33 +57,21 @@ defmodule Iclash.DomainTypes.ClanTest do
 
   describe "get_clan/1" do
     test "gets a clan and return clan struct", %{clan: clan} do
-      {:ok, inserted_clan} = Clan.upsert_clan(clan)
+      :ok = Clan.upsert_clan(clan)
       clan_form_db = Clan.get_clan(clan.tag)
-      assert inserted_clan == clan_form_db
+      assert %ClanSchema{} = clan_form_db
     end
 
-    test "do not fetch clan's data from clash api if clan is found in db", %{clan: clan} do
-      MockClashApi |> expect(:fetch_clan, 0, fn _ -> {:ok, clan} end)
-      {:ok, inserted_clan} = Clan.upsert_clan(clan)
-      clan_form_db = Clan.get_clan(clan.tag)
-      assert inserted_clan == clan_form_db
-    end
-
-    test "fetch clan's data from clash api if not found in db", %{clan: clan} do
-      MockClashApi |> expect(:fetch_clan, fn _ -> {:ok, clan} end)
-      assert clan == Clan.get_clan(clan.tag)
-    end
-
-    test "return error tuple if not found in db and clash api", %{clan: clan} do
-      MockClashApi |> expect(:fetch_clan, fn _ -> {:error, {:http_error, %Req.Response{}}} end)
+    test "return error tuple if not found in database", %{clan: clan} do
       assert {:error, :not_found} == Clan.get_clan(clan.tag)
     end
   end
 
   describe "upsert_clan/1" do
     test "creates a clan", %{clan: clan} do
-      {:ok, clan_form_db} = Clan.upsert_clan(clan)
-      assert clan_form_db == Clan.get_clan(clan.tag)
+      :ok = Clan.upsert_clan(clan)
+      {:ok, clan_form_db} == Clan.get_clan(clan.tag)
+      assert clan_form_db.tag == clan.tag
     end
 
     test "updates a clan", %{clan: clan} do
@@ -111,11 +99,14 @@ defmodule Iclash.DomainTypes.ClanTest do
 
       updated_clan = Map.put(clan, :member_list, new_member_list)
 
-      {:ok, _clan_from_db} = Clan.upsert_clan(clan)
-      {:ok, updated_clan} = Clan.upsert_clan(updated_clan)
+      :ok = Clan.upsert_clan(clan)
+      {:ok, clan_from_db} = Clan.get_clan(clan.tag)
 
-      assert clan != updated_clan
-      assert ClanSchema.to_map(updated_clan).member_list == new_member_list
+      :ok = Clan.upsert_clan(updated_clan)
+      {:ok, updated_clan_from_db} = Clan.get_clan(updated_clan.tag)
+
+      assert clan_from_db != updated_clan_from_db
+      assert ClanSchema.to_map(updated_clan_from_db).member_list == new_member_list
     end
 
     test "updates a clan updated_at and keeps inserted_at", %{clan: clan} do
@@ -128,11 +119,14 @@ defmodule Iclash.DomainTypes.ClanTest do
         |> Map.put(:updated_at, nil)
         |> Map.put(:insterted_at, nil)
 
-      {:ok, clan_from_db} = Clan.upsert_clan(clan)
-      {:ok, updated_clan} = Clan.upsert_clan(updated_clan)
+      :ok = Clan.upsert_clan(clan)
+      {:ok, clan_from_db} = Clan.get_clan(clan.tag)
 
-      assert clan_from_db.updated_at != updated_clan.updated_at
-      assert clan_from_db.inserted_at == updated_clan.inserted_at
+      :ok = Clan.upsert_clan(updated_clan)
+      {:ok, updated_clan_from_db} = Clan.get_clan(updated_clan.tag)
+
+      assert clan_from_db.updated_at != updated_clan_from_db.updated_at
+      assert clan_from_db.inserted_at == updated_clan_from_db.inserted_at
     end
   end
 end

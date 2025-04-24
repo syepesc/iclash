@@ -49,8 +49,7 @@ defmodule Iclash.DomainTypes.Player do
   If the player does not exist in the database, it will be inserted.
   If the player exists, it will be updated, keeping track of changes in Player fields.
   """
-  @spec upsert_player(player :: Player.t()) ::
-          {:ok, Player.t()} | {:error, any()} | Ecto.Multi.failure()
+  @spec upsert_player(player :: Player.t()) :: :ok | {:error, any()} | Ecto.Multi.failure()
   def upsert_player(%Player{} = player) do
     Multi.new()
     |> Multi.append(insert_query_for_player(player))
@@ -63,7 +62,7 @@ defmodule Iclash.DomainTypes.Player do
     |> case do
       {:ok, _transaction_result} ->
         Logger.info("Player upserted successfully. player_tag=#{player.tag}")
-        {:ok, get_player(player.tag)}
+        :ok
 
       {:error, reason} ->
         Logger.error(

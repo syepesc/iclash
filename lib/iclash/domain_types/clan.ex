@@ -31,11 +31,14 @@ defmodule Iclash.DomainTypes.Clan do
   @doc """
   Upsert a clan into database.
   """
-  @spec upsert_clan(clan :: Clan.t()) :: {:ok, Clan.t()} | {:error, Ecto.Changeset.t()}
+  @spec upsert_clan(clan :: Clan.t()) :: :ok | {:error, Ecto.Changeset.t()}
   def upsert_clan(%Clan{} = clan) do
-    Repo.insert(clan,
-      on_conflict: {:replace_all_except, [:tag, :inserted_at]},
-      conflict_target: :tag
-    )
+    case Repo.insert(clan,
+           on_conflict: {:replace_all_except, [:tag, :inserted_at]},
+           conflict_target: :tag
+         ) do
+      {:ok, _clan} -> :ok
+      {:error, changeset} -> {:error, changeset}
+    end
   end
 end

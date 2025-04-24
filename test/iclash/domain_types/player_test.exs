@@ -104,33 +104,21 @@ defmodule Iclash.DomainTypes.PlayerTest do
 
   describe "get_player/1" do
     test "gets a player and return player struct", %{player: player} do
-      {:ok, inserted_player} = Player.upsert_player(player)
+      :ok = Player.upsert_player(player)
       player_form_db = Player.get_player(player.tag)
-      assert inserted_player == player_form_db
+      assert %PlayerSchema{} = player_form_db
     end
 
-    test "do not fetch player's data from clash api if player is found in db", %{player: player} do
-      MockClashApi |> expect(:fetch_player, 0, fn _ -> {:ok, player} end)
-      {:ok, inserted_player} = Player.upsert_player(player)
-      player_form_db = Player.get_player(player.tag)
-      assert inserted_player == player_form_db
-    end
-
-    test "fetch player's data from clash api if not found in db", %{player: player} do
-      MockClashApi |> expect(:fetch_player, fn _ -> {:ok, player} end)
-      assert player == Player.get_player(player.tag)
-    end
-
-    test "return error tuple if not found in db and clash api", %{player: player} do
-      MockClashApi |> expect(:fetch_player, fn _ -> {:error, {:http_error, %Req.Response{}}} end)
+    test "return error tuple if not found in database", %{player: player} do
       assert {:error, :not_found} == Player.get_player(player.tag)
     end
   end
 
   describe "upsert_player/1" do
     test "creates a player", %{player: player} do
-      {:ok, player_form_db} = Player.upsert_player(player)
-      assert player_form_db == Player.get_player(player.tag)
+      :ok = Player.upsert_player(player)
+      {:ok, player_from_db} = Player.get_player(player.tag)
+      assert player.tag == player_from_db.tag
     end
 
     test "updates a player", %{player: player} do
@@ -138,8 +126,10 @@ defmodule Iclash.DomainTypes.PlayerTest do
       new_name = "NEW NAME"
       updated_player = Map.put(player, :name, new_name)
 
-      {:ok, _player_from_db} = Player.upsert_player(player)
-      {:ok, updated_player} = Player.upsert_player(updated_player)
+      :ok = Player.upsert_player(player)
+
+      :ok = Player.upsert_player(updated_player)
+      {:ok, updated_player} = Player.get_player(updated_player.tag)
 
       assert updated_player.name == new_name
     end
@@ -154,8 +144,11 @@ defmodule Iclash.DomainTypes.PlayerTest do
         |> Map.put(:updated_at, nil)
         |> Map.put(:insterted_at, nil)
 
-      {:ok, player_from_db} = Player.upsert_player(player)
-      {:ok, updated_player} = Player.upsert_player(updated_player)
+      :ok = Player.upsert_player(player)
+      {:ok, player_from_db} = Player.get_player(player.tag)
+
+      :ok = Player.upsert_player(updated_player)
+      {:ok, updated_player} = Player.get_player(updated_player.tag)
 
       assert player_from_db.updated_at != updated_player.updated_at
       assert player_from_db.inserted_at == updated_player.inserted_at
@@ -196,8 +189,11 @@ defmodule Iclash.DomainTypes.PlayerTest do
         |> Map.put(:heroes, heroes_to_update)
         |> PlayerSchema.from_map()
 
-      {:ok, player_from_db} = Player.upsert_player(player)
-      {:ok, updated_player} = Player.upsert_player(player_to_update)
+      :ok = Player.upsert_player(player)
+      {:ok, player_from_db} = Player.get_player(player.tag)
+
+      :ok = Player.upsert_player(player_to_update)
+      {:ok, updated_player} = Player.get_player(player_to_update.tag)
 
       # Assert 2 heroes after initial player insertion.
       assert length(player_from_db.heroes) == 2
@@ -234,8 +230,11 @@ defmodule Iclash.DomainTypes.PlayerTest do
         |> Map.put(:heroes, heroes_to_update)
         |> PlayerSchema.from_map()
 
-      {:ok, player_from_db} = Player.upsert_player(player)
-      {:ok, updated_player} = Player.upsert_player(player_to_update)
+      :ok = Player.upsert_player(player)
+      {:ok, player_from_db} = Player.get_player(player.tag)
+
+      :ok = Player.upsert_player(player_to_update)
+      {:ok, updated_player} = Player.get_player(player_to_update.tag)
 
       hero_1 = Enum.find(player_from_db.heroes, fn hero -> hero.name == "HERO 1" end)
       updated_hero_1 = Enum.find(updated_player.heroes, fn hero -> hero.name == "HERO 1" end)
@@ -279,8 +278,11 @@ defmodule Iclash.DomainTypes.PlayerTest do
         |> Map.put(:troops, troops_to_update)
         |> PlayerSchema.from_map()
 
-      {:ok, player_from_db} = Player.upsert_player(player)
-      {:ok, updated_player} = Player.upsert_player(player_to_update)
+      :ok = Player.upsert_player(player)
+      {:ok, player_from_db} = Player.get_player(player.tag)
+
+      :ok = Player.upsert_player(player_to_update)
+      {:ok, updated_player} = Player.get_player(player_to_update.tag)
 
       # Assert 1 troop after initial player insertion.
       assert length(player_from_db.troops) == 1
@@ -317,10 +319,11 @@ defmodule Iclash.DomainTypes.PlayerTest do
         |> Map.put(:troops, troops_to_update)
         |> PlayerSchema.from_map()
 
-      {:ok, player_from_db} = Player.upsert_player(player)
+      :ok = Player.upsert_player(player)
+      {:ok, player_from_db} = Player.get_player(player.tag)
 
-      {:ok, updated_player} =
-        Player.upsert_player(player_to_update)
+      :ok = Player.upsert_player(player_to_update)
+      {:ok, updated_player} = Player.get_player(player_to_update.tag)
 
       troop_1 = Enum.find(player_from_db.troops, fn troop -> troop.name == "TROOP 1" end)
       updated_troop_1 = Enum.find(updated_player.troops, fn troop -> troop.name == "TROOP 1" end)
@@ -364,8 +367,11 @@ defmodule Iclash.DomainTypes.PlayerTest do
         |> Map.put(:spells, spells_to_update)
         |> PlayerSchema.from_map()
 
-      {:ok, player_from_db} = Player.upsert_player(player)
-      {:ok, updated_player} = Player.upsert_player(player_to_update)
+      :ok = Player.upsert_player(player)
+      {:ok, player_from_db} = Player.get_player(player.tag)
+
+      :ok = Player.upsert_player(player_to_update)
+      {:ok, updated_player} = Player.get_player(player_to_update.tag)
 
       # Assert 1 spell after initial player insertion.
       assert length(player_from_db.spells) == 1
@@ -402,8 +408,11 @@ defmodule Iclash.DomainTypes.PlayerTest do
         |> Map.put(:spells, spells_to_update)
         |> PlayerSchema.from_map()
 
-      {:ok, player_from_db} = Player.upsert_player(player)
-      {:ok, updated_player} = Player.upsert_player(player_to_update)
+      :ok = Player.upsert_player(player)
+      {:ok, player_from_db} = Player.get_player(player.tag)
+
+      :ok = Player.upsert_player(player_to_update)
+      {:ok, updated_player} = Player.get_player(player_to_update.tag)
 
       spell_1 = Enum.find(player_from_db.spells, fn spell -> spell.name == "SPELL 1" end)
       updated_spell_1 = Enum.find(updated_player.spells, fn spell -> spell.name == "SPELL 1" end)
@@ -447,8 +456,11 @@ defmodule Iclash.DomainTypes.PlayerTest do
         |> Map.put(:hero_equipment, he_to_update)
         |> PlayerSchema.from_map()
 
-      {:ok, player_from_db} = Player.upsert_player(player)
-      {:ok, updated_player} = Player.upsert_player(player_to_update)
+      :ok = Player.upsert_player(player)
+      {:ok, player_from_db} = Player.get_player(player.tag)
+
+      :ok = Player.upsert_player(player_to_update)
+      {:ok, updated_player} = Player.get_player(player_to_update.tag)
 
       # Assert 1 HE after initial player insertion.
       assert length(player_from_db.hero_equipment) == 1
@@ -485,8 +497,11 @@ defmodule Iclash.DomainTypes.PlayerTest do
         |> Map.put(:hero_equipment, he_to_update)
         |> PlayerSchema.from_map()
 
-      {:ok, player_from_db} = Player.upsert_player(player)
-      {:ok, updated_player} = Player.upsert_player(player_to_update)
+      :ok = Player.upsert_player(player)
+      {:ok, player_from_db} = Player.get_player(player.tag)
+
+      :ok = Player.upsert_player(player_to_update)
+      {:ok, updated_player} = Player.get_player(player_to_update.tag)
 
       he_1 = Enum.find(player_from_db.hero_equipment, fn he -> he.name == "HERO EQUIPMENT 1" end)
 
@@ -530,8 +545,11 @@ defmodule Iclash.DomainTypes.PlayerTest do
         |> Map.put(:legend_statistics, ls_to_update)
         |> PlayerSchema.from_map()
 
-      {:ok, player_from_db} = Player.upsert_player(player)
-      {:ok, updated_player} = Player.upsert_player(player_to_update)
+      :ok = Player.upsert_player(player)
+      {:ok, player_from_db} = Player.get_player(player.tag)
+
+      :ok = Player.upsert_player(player_to_update)
+      {:ok, updated_player} = Player.get_player(player_to_update.tag)
 
       # Assert 1 HE after initial player insertion.
       assert length(player_from_db.legend_statistics) == 1
@@ -566,8 +584,11 @@ defmodule Iclash.DomainTypes.PlayerTest do
         |> Map.put(:legend_statistics, ls_to_update)
         |> PlayerSchema.from_map()
 
-      {:ok, player_from_db} = Player.upsert_player(player)
-      {:ok, updated_player} = Player.upsert_player(player_to_update)
+      :ok = Player.upsert_player(player)
+      {:ok, player_from_db} = Player.get_player(player.tag)
+
+      :ok = Player.upsert_player(player_to_update)
+      {:ok, updated_player} = Player.get_player(player_to_update.tag)
 
       he_1 = Enum.find(player_from_db.legend_statistics, fn ls -> ls.trophies == 100 end)
       updated_he_1 = Enum.find(updated_player.legend_statistics, fn he -> he.trophies == 150 end)

@@ -25,7 +25,7 @@ defmodule Iclash.DataFetcher.ClanWarFetcher do
   @impl true
   def handle_info(:fetch_and_persist_clan_war, clan_tag) do
     with {:ok, %ClanWarSchema{} = fetched_clan_war} <- ClashApi.fetch_current_war(clan_tag),
-         {:ok, _clan_wars} <- ClanWar.upsert_clan_war(fetched_clan_war) do
+         :ok <- ClanWar.upsert_clan_war(fetched_clan_war) do
       schedule_fetch_when_war_ends(fetched_clan_war)
       {:stop, :normal, clan_tag}
     else

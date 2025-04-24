@@ -24,7 +24,7 @@ defmodule Iclash.DataFetcher.ClanFetcher do
   @impl true
   def handle_info(:fetch_and_persist_clan, clan_tag) do
     with {:ok, %ClanSchema{} = fetched_clan} <- ClashApi.fetch_clan(clan_tag),
-         {:ok, _clan} <- Clan.upsert_clan(fetched_clan) do
+         :ok <- Clan.upsert_clan(fetched_clan) do
       schedule_next_fetch(clan_tag)
       schedule_clan_war_fetch(clan_tag)
       schedule_players_fetch(fetched_clan.member_list)

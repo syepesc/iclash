@@ -43,8 +43,7 @@ defmodule Iclash.DomainTypes.ClanWar do
   @doc """
   Upsert a clan war into database.
   """
-  @spec upsert_clan_war(clan_war :: ClanWar.t()) ::
-          {:ok, [ClanWar.t()]} | {:error, any()} | Ecto.Multi.failure()
+  @spec upsert_clan_war(clan_war :: ClanWar.t()) :: :ok | {:error, any()} | Ecto.Multi.failure()
   def upsert_clan_war(%ClanWar{} = clan_war) do
     Multi.new()
     |> Multi.append(insert_query_for_clan_war(clan_war))
@@ -53,7 +52,7 @@ defmodule Iclash.DomainTypes.ClanWar do
     |> case do
       {:ok, _transaction_result} ->
         Logger.info("Clan war upserted successfully. clan_tag=#{clan_war.clan_tag}")
-        {:ok, get_clan_wars(clan_war.clan_tag)}
+        :ok
 
       {:error, reason} ->
         Logger.error(

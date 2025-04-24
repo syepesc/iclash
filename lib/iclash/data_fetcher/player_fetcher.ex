@@ -24,7 +24,7 @@ defmodule Iclash.DataFetcher.PlayerFetcher do
   @impl true
   def handle_info(:fetch_and_persist_player, player_tag) do
     with {:ok, %PlayerSchema{} = fetched_player} <- ClashApi.fetch_player(player_tag),
-         {:ok, _player} <- Player.upsert_player(fetched_player) do
+         :ok <- Player.upsert_player(fetched_player) do
       schedule_next_fetch(player_tag)
       {:stop, :normal, player_tag}
     else
