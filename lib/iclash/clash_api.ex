@@ -52,7 +52,7 @@ defmodule Iclash.ClashApi.ClientImpl do
     |> Req.merge(url: "/players/:player_tag", path_params: [player_tag: player_tag])
     |> make_request()
     |> case do
-      {:ok, body} -> body |> transform_legend_statistics() |> Player.from_map()
+      {:ok, body} -> Player.from_clash_api(body)
       # This bubbles-up the returns from make_request/1.
       error -> error
     end
@@ -75,21 +75,10 @@ defmodule Iclash.ClashApi.ClientImpl do
     |> make_request()
     |> case do
       {:ok, body} ->
-        # We only care about these states:
-        # - inWar: The clan is currently in war.
-        # - warEnded: The clan is currently in war, but the war has ended.
-        # Other states are not relevant for us.
         if body["state"] in ["inWar", "warEnded"] do
-          body
-          # Since we are also transforming the opponent field, extracting attacks should go first than extracting opponent tag.
-          |> extract_clan_war_attacks()
-          |> extract_clan_tag()
-          |> extract_opponent_tag()
-          |> transform_date_into_datetime_struct()
-          # Added war_type manually here to identify between clan_war and clan_war_league wars. This is a required field for the ClanWar schema.
-          |> Map.put("war_type", "clan_war")
-          |> ClanWar.from_map()
+          ClanWar.from_clash_api(body)
         else
+          # We don't care when clan war is in other states. e.i. like "preparation" or "notInWar".
           Logger.info("Skipping, clan is not currently in war. clan_tag=#{clan_tag}")
           {:ok, :not_in_war}
         end
@@ -175,123 +164,5 @@ defmodule Iclash.ClashApi.ClientImpl do
         Logger.warning("Network error. error=#{inspect(reason)} request=#{inspect(req)}")
         {:error, {:network_error, reason}}
     end
-  end
-
-  defp transform_legend_statistics(body) do
-    # As defined in the Player schema, the legend_statistics is a one-to-many relationship.
-    # The intend is to store multiple legend_statistic results for each player.
-    # Now, Clash API return a map of:
-    #
-    # %{
-    #   "legend_statictics" => %{
-    #     "current_season" => %{...},
-    #     "previous_season" => %{...},
-    #     ...
-    #   }
-    # }
-    #
-    # So:
-    # 1) We need to transform this map into a list of legend_statistic.
-    #    Caring only about `current_season` and `previous_season`.
-    #
-    # 2) We need to generate `current_season` id because Clash API does not include it,
-    #    following season id pattern "<year>-<month>".
-    #
-    # Note: we use Map.get() because there are players that do not have `legend_statistics` at all, this prevents from crashing the application.
-    current_year = Date.utc_today().year
-    current_month = Date.utc_today().month |> Integer.to_string() |> String.pad_leading(2, "0")
-
-    current_season =
-      body
-      |> Map.get("legend_statistics", %{})
-      |> Map.get("current_season", %{})
-      |> case do
-        %{} -> %{}
-        current_season -> Map.put(current_season, "id", "#{current_year}-#{current_month}")
-      end
-
-    previous_season =
-      body
-      |> Map.get("legend_statistics", %{})
-      |> Map.get("previous_season", %{})
-
-    legend_statistics = [current_season, previous_season] |> Enum.reject(&(&1 == %{}))
-
-    Map.put(body, "legend_statistics", legend_statistics)
-  end
-
-  defp transform_date_into_datetime_struct(body) do
-    # As defined in the ClanWar schema, the `start_time` and `end_time` are `utc_datetime_usec`.
-    # However, Clash API return a string with the following format representing a date: "20250330T105010.000Z"
-    #
-    # So:
-    # 1) We need to transform the date string into Elixir DateTime.
-    # 2) Append the transform date into the body of the response.
-    body
-    |> Map.put("start_time", format_date_string(body["start_time"]))
-    |> Map.put("end_time", format_date_string(body["end_time"]))
-  end
-
-  defp extract_clan_tag(body) do
-    # As defined in the ClanWar schema, the `clan_tag` field is a string.
-    # However, Clash API return a map with the clan info.
-    #
-    # So:
-    # 1) We need to extract the clan tag.
-    # 2) Append the tag into the body of the response.
-    clan_tag = body["clan"]["tag"]
-    Map.put(body, "clan_tag", clan_tag)
-  end
-
-  defp extract_opponent_tag(body) do
-    # As defined in the ClanWar schema, the `opponent` field is a string.
-    # However, Clash API return a map with the opponent clan info.
-    #
-    # So:
-    # 1) We need to extract the oppoent clan tag.
-    # 2) Append the tag into the body of the response.
-    opponent_tag = body["opponent"]["tag"]
-    Map.put(body, "opponent", opponent_tag)
-  end
-
-  defp extract_clan_war_attacks(body) do
-    # As defined in the ClanWar schema, the `attacks` field is a list of attacks.
-    # The Clash API provides a map containing the list of clan members for both the attacking and defending clans.
-    # Each member in this list includes an `attacks` field, which represents the attacks performed by that member during the war.
-    #
-    # So:
-    # 1) We need to extract the attacks from both `clan` and `opponent`.
-    # 2) Append foreign keys from Clan War to each attack: `clan_tag`, `opponent`, `war_start_time`.
-    # 3) Append the attacks into the body of the response.
-
-    # Extract attacks from each clan member, we use Map.get() because there might be members that haven't attack yet.
-    clan_attacks =
-      body["clan"]["members"]
-      |> Enum.map(fn member -> Map.get(member, "attacks", []) end)
-      |> List.flatten()
-
-    opponent_attacks =
-      body["opponent"]["members"]
-      |> Enum.map(fn member -> Map.get(member, "attacks", []) end)
-      |> List.flatten()
-
-    attacks =
-      (clan_attacks ++ opponent_attacks)
-      |> Enum.map(fn attack ->
-        attack
-        |> Map.put("clan_tag", body["clan"]["tag"])
-        |> Map.put("opponent", body["opponent"]["tag"])
-        |> Map.put("war_start_time", format_date_string(body["start_time"]))
-      end)
-
-    Map.put(body, "attacks", attacks)
-  end
-
-  defp format_date_string(date_string) do
-    String.replace(
-      date_string,
-      ~r/(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})/,
-      "\\1-\\2-\\3T\\4:\\5:\\6"
-    )
   end
 end

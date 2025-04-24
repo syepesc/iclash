@@ -1,6 +1,8 @@
 defmodule Iclash.Repo.Schemas.Player do
   @moduledoc false
 
+  # TODO: Add when guards on function signatures of every Repo Schema.
+
   use Ecto.Schema
   import Ecto.Changeset
 
@@ -107,7 +109,7 @@ defmodule Iclash.Repo.Schemas.Player do
   Returns a Player struct from a map.
   """
   @spec from_map(player :: map()) :: {:ok, __MODULE__.t()} | {:error, errors_map()}
-  def from_map(%{} = player) do
+  def from_map(player) when is_map(player) do
     changeset = changeset(%__MODULE__{}, player)
 
     case changeset.valid? do
@@ -129,7 +131,57 @@ defmodule Iclash.Repo.Schemas.Player do
   Returns a map from a Player struct.
   """
   @spec to_map(player :: __MODULE__.t()) :: map()
-  def to_map(%__MODULE__{} = player) do
+  def to_map(player) when is_struct(player, __MODULE__) do
     StructUtils.deep_struct_to_map(player)
+  end
+
+  @spec from_clash_api(response_body :: map()) :: {:ok, __MODULE__.t()} | {:error, any()}
+  def from_clash_api(response_body) when is_map(response_body) do
+    response_body
+    |> transform_legend_statistics()
+    |> from_map()
+  end
+
+  defp transform_legend_statistics(body) do
+    # As defined in the Player schema, the legend_statistics is a one-to-many relationship.
+    # The intend is to store multiple legend_statistic results for each player.
+    # Now, Clash API return a map of:
+    #
+    # %{
+    #   "legend_statistics" => %{
+    #     "current_season" => %{...},
+    #     "previous_season" => %{...},
+    #     ...
+    #   }
+    # }
+    #
+    # So:
+    # 1) We need to transform this map into a list of legend_statistic.
+    #    Caring only about `current_season` and `previous_season`.
+    #
+    # 2) We need to generate `current_season` id because Clash API does not include it,
+    #    following season id pattern "<year>-<month>".
+    #
+    # Note: we use Map.get() because there are players that do not have `legend_statistics` at all, this prevents from crashing the application.
+    current_year = Date.utc_today().year
+    current_month = Date.utc_today().month |> Integer.to_string() |> String.pad_leading(2, "0")
+
+    current_season =
+      body
+      |> Map.get("legend_statistics", %{})
+      |> Map.get("current_season", %{})
+      |> case do
+        %{} -> %{}
+        current_season -> Map.put(current_season, "id", "#{current_year}-#{current_month}")
+      end
+
+    previous_season =
+      body
+      |> Map.get("legend_statistics", %{})
+      |> Map.get("previous_season", %{})
+
+    legend_statistics = [current_season, previous_season] |> Enum.reject(&(&1 == %{}))
+
+    Map.put(body, "legend_statistics", legend_statistics)
   end
 end
