@@ -1,10 +1,6 @@
 defmodule Iclash.Repo.Schemas.Clan do
   @moduledoc false
 
-  # TODO: Extend clan schema with Clan Wars.
-  # TODO: Extend clan schema with Clan War League Statistics.
-  # TODO: Extend clan schema with Clan War Log, take into count the `is_war_log_public` variable.
-
   use Ecto.Schema
   import Ecto.Changeset
 

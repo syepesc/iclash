@@ -43,3 +43,6 @@ npm-debug.log
 
 # Mac OS
 .DS_Store
+
+# VSCode
+.vscode/

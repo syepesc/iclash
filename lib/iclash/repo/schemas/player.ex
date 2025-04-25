@@ -18,9 +18,9 @@ defmodule Iclash.Repo.Schemas.Player do
   @starts_with_hash ~r/^#/
   @letters_and_numbers ~r/^#[A-Za-z0-9]+$/
 
-  # Adding timestamps as optionnal fields comes handy when testing with a fixed time.
+  # Adding timestamps as optional fields comes handy when testing with a fixed time.
   @optional_fields [:inserted_at, :updated_at]
-  @requiered_fields [
+  @required_fields [
     :tag,
     :name,
     :trophies,
@@ -86,20 +86,18 @@ defmodule Iclash.Repo.Schemas.Player do
       # This preload order is used in the `Player.get_player()` function.
       preload_order: [asc: :updated_at]
 
-    # TODO: implement the following assocs: `clan`.
-
     timestamps(type: :utc_datetime_usec)
   end
 
   def changeset(%__MODULE__{} = player, attrs \\ %{}) do
     player
-    |> cast(attrs, @requiered_fields ++ @optional_fields)
+    |> cast(attrs, @required_fields ++ @optional_fields)
     |> cast_assoc(:heroes, with: &Heroe.changeset/2)
     |> cast_assoc(:troops, with: &Troop.changeset/2)
     |> cast_assoc(:spells, with: &Spell.changeset/2)
     |> cast_assoc(:hero_equipment, with: &HeroEquipment.changeset/2)
     |> cast_assoc(:legend_statistics, with: &LegendStatistic.changeset/2)
-    |> validate_required(@requiered_fields)
+    |> validate_required(@required_fields)
     |> unique_constraint([:tag], message: "Player Tag must be unique.")
     |> validate_format(:tag, @starts_with_hash, message: "Tag must start with '#'.")
     |> validate_format(:tag, @letters_and_numbers, message: "Tag must be an alphanumeric string.")

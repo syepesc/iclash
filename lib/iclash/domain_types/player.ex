@@ -4,8 +4,6 @@ defmodule Iclash.DomainTypes.Player do
   This module defines functionalities to interact with a player info.
   """
 
-  # TODO: Implement versioning on player and heroes records.
-
   import Ecto.Query
 
   alias Ecto.Multi
