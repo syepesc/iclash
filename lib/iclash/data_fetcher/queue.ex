@@ -39,14 +39,17 @@ defmodule Iclash.DataFetcher.Queue do
   # Public API
   # ###########################################################################
 
+  @spec enqueue_player_fetch(clan_tag :: String.t(), fetch_in_ms :: pos_integer()) :: :ok
   def enqueue_clan_fetch(clan_tag, fetch_in_ms \\ 0) do
     GenServer.cast(via(), {:fetch_clan_in, clan_tag, fetch_in_ms})
   end
 
+  @spec enqueue_player_fetch(clan_tag :: String.t(), fetch_in_ms :: pos_integer()) :: :ok
   def enqueue_clan_war_fetch(clan_tag, fetch_in_ms \\ 0) do
     GenServer.cast(via(), {:fetch_clan_war_in, clan_tag, fetch_in_ms})
   end
 
+  @spec enqueue_player_fetch(player_tag :: String.t(), fetch_in_ms :: pos_integer()) :: :ok
   def enqueue_player_fetch(player_tag, fetch_in_ms \\ 0) do
     GenServer.cast(via(), {:fetch_player_in, player_tag, fetch_in_ms})
   end
