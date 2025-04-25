@@ -8,7 +8,13 @@ config :iclash, Iclash.Repo,
   database: "iclash_dev",
   stacktrace: true,
   show_sensitive_data_on_connection_error: true,
-  pool_size: 10
+  # TODO: Explain why the following values. Defaults are: 10, 50, 1000.
+  # https://hexdocs.pm/ecto/Ecto.Repo.html
+  # https://hexdocs.pm/db_connection/DBConnection.html#start_link/2-queue-config
+  # TODO: Replicate this for prod DB.
+  pool_size: 20,
+  queue_target: 1000,
+  queue_interval: 1500
 
 # For development, we disable any cache and enable
 # debugging and code reloading.
