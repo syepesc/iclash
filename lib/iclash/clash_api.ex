@@ -138,8 +138,7 @@ defmodule Iclash.ClashApi.ClientImpl do
 
   defp base_request() do
     Req.new(
-      retry: :safe_transient,
-      max_retries: 5,
+      retry: false,
       auth: {:bearer, api_token()},
       base_url: base_url(),
       # Transform keys from CamelCase/camelCase to snake_case.
