@@ -51,7 +51,7 @@ defmodule Iclash.DomainTypes.ClanWar do
     |> Repo.transaction()
     |> case do
       {:ok, _transaction_result} ->
-        Logger.info("Clan war upserted successfully. clan_tag=#{clan_war.clan_tag}")
+        Logger.debug("Clan war upserted successfully. clan_tag=#{clan_war.clan_tag}")
         :ok
 
       {:error, reason} ->
