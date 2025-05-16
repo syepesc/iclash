@@ -4,7 +4,6 @@ defmodule Iclash.DomainTypes.Clan do
   This module defines functionalities to interact with a Clan info.
   """
 
-  alias Iclash.ClashApi
   alias Iclash.Repo
   alias Iclash.Repo.Schemas.Clan
 
@@ -19,14 +18,8 @@ defmodule Iclash.DomainTypes.Clan do
     result = Clan |> Repo.get(tag)
 
     case result do
-      nil ->
-        case ClashApi.fetch_clan(tag) do
-          {:ok, clan} -> clan
-          {:error, _} -> {:error, :not_found}
-        end
-
-      clan ->
-        clan
+      nil -> {:error, :not_found}
+      clan -> clan
     end
   end
 

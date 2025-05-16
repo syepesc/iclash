@@ -7,7 +7,6 @@ defmodule Iclash.DomainTypes.Player do
   import Ecto.Query
 
   alias Ecto.Multi
-  alias Iclash.ClashApi
   alias Iclash.Repo
   alias Iclash.Repo.Schemas.{Player, Heroe, Troop, Spell, HeroEquipment, LegendStatistic}
 
@@ -33,14 +32,8 @@ defmodule Iclash.DomainTypes.Player do
       )
 
     case result do
-      nil ->
-        case ClashApi.fetch_player(tag) do
-          {:ok, player} -> player
-          {:error, _} -> {:error, :not_found}
-        end
-
-      player ->
-        player
+      nil -> {:error, :not_found}
+      player -> player
     end
   end
 

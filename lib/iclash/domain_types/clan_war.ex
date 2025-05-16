@@ -8,7 +8,6 @@ defmodule Iclash.DomainTypes.ClanWar do
 
   alias Iclash.Repo.Schemas.ClanWarAttack
   alias Ecto.Multi
-  alias Iclash.ClashApi
   alias Iclash.Repo
   alias Iclash.Repo.Schemas.ClanWar
 
@@ -29,16 +28,8 @@ defmodule Iclash.DomainTypes.ClanWar do
       |> Repo.all()
 
     case result do
-      [] ->
-        case ClashApi.fetch_current_war(tag) do
-          {:ok, :not_in_war} -> {:error, :not_found}
-          {:ok, :war_log_private} -> {:error, :not_found}
-          {:ok, clan_war} -> clan_war
-          {:error, _} -> {:error, :not_found}
-        end
-
-      clan_war ->
-        clan_war
+      [] -> {:error, :not_found}
+      clan_wars -> clan_wars
     end
   end
 
