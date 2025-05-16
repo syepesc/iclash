@@ -76,7 +76,10 @@ defmodule Iclash.ClashApi.ClientImpl do
     |> case do
       {:ok, body} ->
         if body["state"] in ["inWar", "warEnded"] do
-          ClanWar.from_clash_api(body)
+          # Handling specific war_type: We need to distinguish between clan_war and clan_war_league,
+          # as the Clash API does not include this field. Therefore, we add it manually
+          # TODO: When implement clan war league fetch also add this field
+          ClanWar.from_clash_api(Map.put(body, "war_type", :clan_war))
         else
           # We don't care when clan war is in other states. e.i. like "preparation" or "notInWar".
           Logger.info("Skipping, clan is not currently in war. clan_tag=#{clan_tag}")
