@@ -33,12 +33,7 @@ defmodule Iclash.DataFetcher.PlayerFetcher do
         {:stop, :normal, player_tag}
 
       {:error, {:http_error, %Req.Response{status: 429}}} ->
-        # Try again after req library exhausts its retries set on ClashApi.make_request/1
-        # This will start a loop of retries between this process and req library.
-        Logger.info(
-          "Exhaust req library configured retries, sending message back to queue #{inspect(self())}. player_tag=#{player_tag}"
-        )
-
+        # Too many requests, send message back to queue.
         Queue.enqueue_in({:fetch_player, player_tag}, 5_000)
         {:stop, :normal, player_tag}
 

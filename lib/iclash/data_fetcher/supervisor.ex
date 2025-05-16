@@ -3,7 +3,7 @@ defmodule Iclash.DataFetcher.Supervisor do
 
   use Supervisor
 
-  # This defines the Clash API rate limit: 50 request per second.
+  # This defines the Clash API rate limit: 50 request per second, this number is based on experimentation because their API does not provide one.
   @rate_limit 50
   @rate_limit_ms :timer.seconds(1)
 
