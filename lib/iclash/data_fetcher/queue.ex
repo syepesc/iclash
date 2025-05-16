@@ -1,7 +1,6 @@
 defmodule Iclash.DataFetcher.Queue do
   @moduledoc false
 
-  # TODO: Implement request steps (GenStage). Init by triggering @rate_limit requests, wait 1 second. Then, trigger next @rate_limit requests.
   # TODO: Avoid queuing already queued clans, clan wars, and player.
 
   use GenServer
@@ -10,6 +9,9 @@ defmodule Iclash.DataFetcher.Queue do
   alias Iclash.DataFetcher.ClanWarFetcher
   alias Iclash.DataFetcher.PlayerFetcher
   require Logger
+
+  @type clan_tag :: String.t()
+  @type player_tag :: String.t()
 
   @known_clans [
     # ATLIENS
@@ -39,91 +41,68 @@ defmodule Iclash.DataFetcher.Queue do
   # Public API
   # ###########################################################################
 
-  @spec enqueue_player_fetch(clan_tag :: String.t(), fetch_in_ms :: pos_integer()) :: :ok
-  def enqueue_clan_fetch(clan_tag, fetch_in_ms \\ 0) do
-    GenServer.cast(via(), {:fetch_clan_in, clan_tag, fetch_in_ms})
-  end
-
-  @spec enqueue_player_fetch(clan_tag :: String.t(), fetch_in_ms :: pos_integer()) :: :ok
-  def enqueue_clan_war_fetch(clan_tag, fetch_in_ms \\ 0) do
-    GenServer.cast(via(), {:fetch_clan_war_in, clan_tag, fetch_in_ms})
-  end
-
-  @spec enqueue_player_fetch(player_tag :: String.t(), fetch_in_ms :: pos_integer()) :: :ok
-  def enqueue_player_fetch(player_tag, fetch_in_ms \\ 0) do
-    GenServer.cast(via(), {:fetch_player_in, player_tag, fetch_in_ms})
+  @spec enqueue_in(
+          instruction ::
+            {:fetch_clan, clan_tag()}
+            | {:fetch_player, player_tag()}
+            | {:fetch_clan_war, clan_tag()},
+          delay_in_ms :: non_neg_integer()
+        ) :: :ok
+  def enqueue_in(instruction, delay_in_ms) do
+    GenServer.cast(via(), {:enqueue_in, instruction, delay_in_ms})
   end
 
   # ###########################################################################
   # GenServer callbacks
   # ###########################################################################
-  def start_link(_args) do
-    GenServer.start_link(__MODULE__, :ok, name: via())
+
+  def start_link(args) do
+    GenServer.start_link(__MODULE__, args, name: via())
   end
 
-  def init(:ok) do
-    Logger.info("Starting data fetcher queue process. pid=#{inspect(self())}")
-    clan_tags_seed() |> Enum.each(&Process.send(self(), {:fetch_clan, &1}, []))
-    @known_players |> Enum.each(&Process.send(self(), {:fetch_player, &1}, []))
-    {:ok, %{}}
+  def init(args) do
+    rate_limit = Map.fetch!(args, :rate_limit)
+    rate_limit_ms = Map.fetch!(args, :rate_limit_ms)
+
+    Logger.info(
+      "Starting data fetcher queue process. pid=#{inspect(self())}, rate_limit=#{rate_limit}, rate_limit_ms=#{rate_limit_ms}"
+    )
+
+    state = %{
+      rate_limit: rate_limit,
+      rate_limit_ms: rate_limit_ms,
+      queue: seed_queue()
+    }
+
+    Process.send_after(self(), :process_instructions, 10_000)
+
+    {:ok, state}
   end
 
-  def handle_info({:fetch_clan, clan_tag}, state) do
-    case DynamicSupervisor.start_child(Iclash.DataFetcher, {ClanFetcher, clan_tag}) do
-      {:error, :max_children} ->
-        # Re-enqueue clan fetch for later
-        enqueue_clan_fetch(clan_tag)
-        {:noreply, state}
+  def handle_info(:process_instructions, state) do
+    # 1. Process as many instructions as the rate limit allow.
+    {to_process, rest} = Enum.split(state.queue, state.rate_limit)
 
-      _ ->
-        {:noreply, state}
-    end
+    # 2. Delegate instructions.
+    :ok = Enum.each(to_process, fn i -> handle_instruction(i) end)
+
+    # 3. Process instructions again according to rate limit timer.
+    Process.send_after(self(), :process_instructions, state.rate_limit_ms)
+
+    # 4. Return new state.
+    {:noreply, %{state | queue: rest}}
   end
 
-  def handle_info({:fetch_clan_war, clan_tag}, state) do
-    case DynamicSupervisor.start_child(Iclash.DataFetcher, {ClanWarFetcher, clan_tag}) do
-      {:error, :max_children} ->
-        # Re-enqueue clan war fetch for later
-        enqueue_clan_war_fetch(clan_tag)
-        {:noreply, state}
-
-      _ ->
-        {:noreply, state}
-    end
+  def handle_info({:enqueue, instruction}, state) do
+    {:noreply, %{state | queue: [instruction | state.queue]}}
   end
 
-  def handle_info({:fetch_player, player_tag}, state) do
-    case DynamicSupervisor.start_child(Iclash.DataFetcher, {PlayerFetcher, player_tag}) do
-      {:error, :max_children} ->
-        # Re-enqueue player fetch for later
-        enqueue_player_fetch(player_tag)
-        {:noreply, state}
-
-      _ ->
-        {:noreply, state}
-    end
-  end
-
-  def handle_cast({:fetch_clan_in, clan_tag, fetch_in}, state) do
-    Process.send_after(self(), {:fetch_clan, clan_tag}, fetch_in)
+  def handle_cast({:enqueue_in, instruction, delay_in_ms}, state) do
+    Process.send_after(self(), {:enqueue, instruction}, delay_in_ms)
     {:noreply, state}
   end
 
-  def handle_cast({:fetch_clan_war_in, clan_tag, fetch_in}, state) do
-    Process.send_after(self(), {:fetch_clan_war, clan_tag}, fetch_in)
-    {:noreply, state}
-  end
-
-  def handle_cast({:fetch_player_in, player_tag, fetch_in}, state) do
-    Process.send_after(self(), {:fetch_player, player_tag}, fetch_in)
-    {:noreply, state}
-  end
-
-  defp via() do
-    {:via, Registry, {Iclash.Registry.DataFetcher, :data_fetcher_queue}}
-  end
-
-  defp clan_tags_seed() do
+  defp seed_queue() do
     {:ok, locations} = ClashApi.fetch_locations()
 
     international_id =
@@ -133,14 +112,50 @@ defmodule Iclash.DataFetcher.Queue do
 
     {:ok, int_rankings_response} = ClashApi.fetch_clan_ranking_by_location(international_id, 200)
 
-    locations["items"]
-    |> Enum.filter(& &1["is_country"])
-    |> Enum.map(& &1["id"])
-    |> Enum.map(fn l_id -> ClashApi.fetch_clan_ranking_by_location(l_id, 50) end)
-    |> Enum.flat_map(fn {:ok, response} -> Map.get(response, "items", []) end)
-    |> Enum.concat(int_rankings_response["items"])
-    |> Enum.map(& &1["tag"])
-    |> Enum.concat(@known_clans)
-    |> Enum.uniq()
+    seed_clans =
+      locations["items"]
+      |> Enum.filter(& &1["is_country"])
+      |> Enum.map(& &1["id"])
+      |> Enum.map(fn l_id -> ClashApi.fetch_clan_ranking_by_location(l_id, 50) end)
+      |> Enum.flat_map(fn {:ok, response} -> Map.get(response, "items", []) end)
+      |> Enum.concat(int_rankings_response["items"])
+      |> Enum.map(& &1["tag"])
+      |> Enum.concat(@known_clans)
+      |> Enum.uniq()
+      |> Enum.map(fn ct -> {:fetch_clan, ct} end)
+
+    seed_players = Enum.map(@known_players, fn pt -> {:fetch_player, pt} end)
+
+    seed_clans ++ seed_players
+  end
+
+  defp handle_instruction(instruction) do
+    case instruction do
+      {:fetch_clan, clan_tag} ->
+        case DynamicSupervisor.start_child(Iclash.DataFetcher, {ClanFetcher, clan_tag}) do
+          {:error, :max_children} -> Process.send(self(), {:enqueue, instruction}, [])
+          _ -> :ok
+        end
+
+      {:fetch_player, player_tag} ->
+        case DynamicSupervisor.start_child(Iclash.DataFetcher, {PlayerFetcher, player_tag}) do
+          {:error, :max_children} -> Process.send(self(), {:enqueue, instruction}, [])
+          _ -> :ok
+        end
+
+      {:fetch_clan_war, clan_tag} ->
+        case DynamicSupervisor.start_child(Iclash.DataFetcher, {ClanWarFetcher, clan_tag}) do
+          {:error, :max_children} -> Process.send(self(), {:enqueue, instruction}, [])
+          _ -> :ok
+        end
+
+      instruction ->
+        Logger.error("Unexpected instruction received. instruction=#{instruction}")
+        :error
+    end
+  end
+
+  defp via() do
+    {:via, Registry, {Iclash.Registry.DataFetcher, :data_fetcher_queue}}
   end
 end

@@ -41,7 +41,7 @@ defmodule Iclash.DataFetcher.ClanFetcher do
           "Exhaust req library configured retries, sending message back to queue #{inspect(self())}. clan_tag=#{clan_tag}"
         )
 
-        Queue.enqueue_clan_fetch(clan_tag, 5_000)
+        Queue.enqueue_in({:fetch_clan, clan_tag}, 5_000)
         {:stop, :normal, clan_tag}
 
       reason ->
@@ -58,18 +58,18 @@ defmodule Iclash.DataFetcher.ClanFetcher do
   end
 
   defp schedule_clan_war_fetch(clan_tag) do
-    Queue.enqueue_clan_war_fetch(clan_tag)
+    Queue.enqueue_in({:fetch_clan_war, clan_tag}, 0)
   end
 
   defp schedule_players_fetch(players) do
     Logger.info("Delegating player fetch for #{length(players)} clan members")
-    Enum.each(players, &Queue.enqueue_player_fetch(&1.tag))
+    Enum.each(players, &Queue.enqueue_in({:fetch_player, &1.tag}, 0))
   end
 
   defp schedule_next_fetch(clan_tag) do
     # I consider that 48 hours is a reasonable fetch interval for clan data, a good minimum could be 24h.
     fetch_in = :timer.hours(48)
     Logger.info("Scheduling next clan fetch in #{fetch_in}ms. clan_tag=#{clan_tag}")
-    Queue.enqueue_clan_fetch(clan_tag, fetch_in)
+    Queue.enqueue_in({:fetch_clan, clan_tag}, fetch_in)
   end
 end

@@ -3,7 +3,9 @@ defmodule Iclash.DataFetcher.Supervisor do
 
   use Supervisor
 
-  @rate_limit 80
+  # This defines the Clash API rate limit: 50 request per second.
+  @rate_limit 50
+  @rate_limit_ms :timer.seconds(1)
 
   def start_link(_) do
     Supervisor.start_link(__MODULE__, :ok, name: __MODULE__)
@@ -15,7 +17,7 @@ defmodule Iclash.DataFetcher.Supervisor do
       {Registry, name: Iclash.Registry.DataFetcher, keys: :unique},
       {DynamicSupervisor,
        name: Iclash.DataFetcher, strategy: :one_for_one, max_children: @rate_limit},
-      {Iclash.DataFetcher.Queue, []}
+      {Iclash.DataFetcher.Queue, %{rate_limit: @rate_limit, rate_limit_ms: @rate_limit_ms}}
     ]
 
     Supervisor.init(children, strategy: :one_for_one)

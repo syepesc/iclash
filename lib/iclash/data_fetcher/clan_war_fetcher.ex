@@ -50,7 +50,7 @@ defmodule Iclash.DataFetcher.ClanWarFetcher do
           "Exhaust req library configured retries, sending message back to queue #{inspect(self())}. clan_tag=#{clan_tag}"
         )
 
-        Queue.enqueue_clan_war_fetch(clan_tag, 5_000)
+        Queue.enqueue_in({:fetch_clan_war, clan_tag}, 5_000)
         {:stop, :normal, clan_tag}
 
       reason ->
@@ -75,7 +75,7 @@ defmodule Iclash.DataFetcher.ClanWarFetcher do
     else
       # War is ongoing, fetch when it ends and add 5 minutes to include attacks made at the last second of the war
       fetch_in = war_end_time_from_now + :timer.minutes(5)
-      Queue.enqueue_clan_war_fetch(clan_war.clan_tag, fetch_in)
+      Queue.enqueue_in({:fetch_clan_war, clan_war.clan_tag}, 5_000)
 
       Logger.info(
         "Scheduling next clan war fetch when war ends in #{fetch_in}ms. clan_tag=#{clan_war.clan_tag}"
@@ -87,7 +87,7 @@ defmodule Iclash.DataFetcher.ClanWarFetcher do
     # I consider that 24 hours is a reasonable fetch interval for clan war data.
     # Since each clan war typically lasts 2 days, this will ensure we fetch data at least once per war.
     fetch_in = :timer.hours(24)
-    Queue.enqueue_clan_war_fetch(clan_tag, fetch_in)
+    Queue.enqueue_in({:fetch_clan_war, clan_tag}, fetch_in)
     Logger.info("Scheduling next clan war fetch in #{fetch_in}ms. clan_tag=#{clan_tag}")
   end
 end

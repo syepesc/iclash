@@ -39,7 +39,7 @@ defmodule Iclash.DataFetcher.PlayerFetcher do
           "Exhaust req library configured retries, sending message back to queue #{inspect(self())}. player_tag=#{player_tag}"
         )
 
-        Queue.enqueue_player_fetch(player_tag, 5_000)
+        Queue.enqueue_in({:fetch_player, player_tag}, 5_000)
         {:stop, :normal, player_tag}
 
       reason ->
@@ -58,7 +58,7 @@ defmodule Iclash.DataFetcher.PlayerFetcher do
   defp schedule_next_fetch(player_tag) do
     # I consider that 24 hours is a reasonable fetch interval for player data
     fetch_in = :timer.hours(24)
-    Queue.enqueue_player_fetch(player_tag, fetch_in)
+    Queue.enqueue_in({:fetch_player, player_tag}, fetch_in)
     Logger.info("Scheduling next player fetch in #{fetch_in}ms. player_tag=#{player_tag}")
   end
 end
