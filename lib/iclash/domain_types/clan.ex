@@ -8,11 +8,13 @@ defmodule Iclash.DomainTypes.Clan do
   alias Iclash.Repo
   alias Iclash.Repo.Schemas.Clan
 
+  @type clan_tag :: String.t()
+
   @doc """
   Get a Clan by tag.
   If the clan is not found in the database, it will be fetched from the Clash API.
   """
-  @spec get_clan(tag :: String.t()) :: Clan.t() | {:error, :not_found}
+  @spec get_clan(tag :: clan_tag()) :: Clan.t() | {:error, :not_found}
   def get_clan(tag) do
     result = Clan |> Repo.get(tag)
 

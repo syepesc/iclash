@@ -13,11 +13,13 @@ defmodule Iclash.DomainTypes.Player do
 
   require Logger
 
+  @type player_tag :: String.t()
+
   @doc """
   Gets a player by tag, with all its preloads (heroes, troops, spells, hero_equipment, and legend_statistics).
   If the player is not found in the database, the function will attempt to fetch the player's data from the ClashAPI.
   """
-  @spec get_player(tag :: String.t()) :: Player.t() | {:error, :not_found}
+  @spec get_player(tag :: player_tag()) :: Player.t() | {:error, :not_found}
   def get_player(tag) do
     result =
       Player

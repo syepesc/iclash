@@ -14,11 +14,13 @@ defmodule Iclash.DomainTypes.ClanWar do
 
   require Logger
 
+  @type clan_tag :: String.t()
+
   @doc """
   Get all clan wars by clan tag.
   If the clan war is not found in the database, it will be fetched from the Clash API.
   """
-  @spec get_clan_wars(tag :: String.t()) :: [ClanWar.t()] | {:error, :not_found}
+  @spec get_clan_wars(tag :: clan_tag()) :: [ClanWar.t()] | {:error, :not_found}
   def get_clan_wars(tag) do
     attacks_query = from cwa in ClanWarAttack, order_by: [asc: cwa.order]
 

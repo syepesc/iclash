@@ -15,7 +15,6 @@ defmodule Iclash.DataFetcher.ClanWarFetcher do
   end
 
   @impl true
-
   def init(clan_tag) do
     Logger.info("Init clan war fetcher process. pid=#{inspect(self())} clan_tag=#{clan_tag}")
     Process.send(self(), :fetch_and_persist_clan_war, [])

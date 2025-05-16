@@ -60,6 +60,7 @@ defmodule Iclash.DataFetcher.Queue do
     GenServer.start_link(__MODULE__, args, name: via())
   end
 
+  @impl true
   def init(args) do
     rate_limit = Map.fetch!(args, :rate_limit)
     rate_limit_ms = Map.fetch!(args, :rate_limit_ms)
@@ -79,6 +80,7 @@ defmodule Iclash.DataFetcher.Queue do
     {:ok, state}
   end
 
+  @impl true
   def handle_info(:process_instructions, state) do
     # 1. Process as many instructions as the rate limit allow.
     {to_process, rest} = Enum.split(state.queue, state.rate_limit)
@@ -93,10 +95,12 @@ defmodule Iclash.DataFetcher.Queue do
     {:noreply, %{state | queue: rest}}
   end
 
+  @impl true
   def handle_info({:enqueue, instruction}, state) do
     {:noreply, %{state | queue: [instruction | state.queue]}}
   end
 
+  @impl true
   def handle_cast({:enqueue_in, instruction, delay_in_ms}, state) do
     Process.send_after(self(), {:enqueue, instruction}, delay_in_ms)
     {:noreply, state}

@@ -8,6 +8,7 @@ defmodule Iclash.Utils.ChagesetUtils do
       assert %{password: ["password is too short"]} = errors_on(changeset)
 
   """
+  @spec errors_on(changeset :: Ecto.Changeset.t()) :: %{atom() => [String.t()]}
   def errors_on(changeset) do
     Ecto.Changeset.traverse_errors(changeset, fn {message, opts} ->
       Regex.replace(~r"%{(\w+)}", message, fn _, key ->
