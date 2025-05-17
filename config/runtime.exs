@@ -52,7 +52,14 @@ if(config_env() == :prod) do
   config :iclash, Iclash.Repo,
     # ssl: true,
     url: database_url,
-    pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
+    # TODO: Explain why the following values. Defaults were: 10, 1, 50, 1000.
+    # https://hexdocs.pm/ecto/Ecto.Repo.html
+    # https://hexdocs.pm/db_connection/DBConnection.html#start_link/2-queue-config
+    # TODO: Replicate this for prod DB.
+    pool_size: String.to_integer(System.get_env("POOL_SIZE") || "40"),
+    pool_count: 2,
+    queue_target: 1000,
+    queue_interval: 1500,
     socket_options: maybe_ipv6
 
   # The secret key base is used to sign/encrypt cookies and other secrets.

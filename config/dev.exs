@@ -8,13 +8,7 @@ config :iclash, Iclash.Repo,
   database: "iclash_dev",
   stacktrace: true,
   show_sensitive_data_on_connection_error: true,
-  # TODO: Explain why the following values. Defaults are: 10, 50, 1000.
-  # https://hexdocs.pm/ecto/Ecto.Repo.html
-  # https://hexdocs.pm/db_connection/DBConnection.html#start_link/2-queue-config
-  # TODO: Replicate this for prod DB.
-  pool_size: 20,
-  queue_target: 1000,
-  queue_interval: 1500
+  pool_size: 10
 
 # For development, we disable any cache and enable
 # debugging and code reloading.
@@ -72,7 +66,7 @@ config :iclash, IclashWeb.Endpoint,
 config :iclash, dev_routes: true
 
 # Do not include metadata nor timestamps in development logs
-config :logger, :console, format: "[$level] $message\n"
+config :logger, :console, format: "[$level] $message\n", level: :info
 
 # Set a higher stacktrace during development. Avoid configuring such
 # in production as building large stacktraces may be expensive.
