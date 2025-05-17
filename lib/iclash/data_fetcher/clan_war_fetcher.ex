@@ -69,7 +69,7 @@ defmodule Iclash.DataFetcher.ClanWarFetcher do
     else
       # War is ongoing, fetch when it ends and add 5 minutes to include attacks made at the last second of the war
       fetch_in = war_end_time_from_now + :timer.minutes(5)
-      Queue.enqueue_in({:fetch_clan_war, clan_war.clan_tag}, 5_000)
+      Queue.enqueue_in({:fetch_clan_war, clan_war.clan_tag}, fetch_in)
 
       Logger.info(
         "Scheduling next clan war fetch when war ends in #{fetch_in}ms. clan_tag=#{clan_war.clan_tag}"
