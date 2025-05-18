@@ -111,7 +111,8 @@ defmodule Iclash.DataFetcher.Queue do
   end
 
   defp seed_queue() do
-    # TODO: abstract this into an Agent that hold its state and refreshes periodically.
+    # TODO: Abstract this into an Agent that hold its state and refreshes periodically.
+    # TODO: Include tags from players and clans that are in the database.
     # TODO: Implement black listing of clan/player tags that are not found (404) or have any weird behaviour like querying more than usual.
 
     {:ok, locations} = ClashApi.fetch_locations()

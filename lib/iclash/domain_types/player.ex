@@ -66,6 +66,8 @@ defmodule Iclash.DomainTypes.Player do
     end
   end
 
+  # TODO: get all player tags from db
+
   defp insert_query_for_player(player) do
     Multi.new()
     |> Multi.insert(

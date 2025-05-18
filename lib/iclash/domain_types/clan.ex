@@ -36,4 +36,6 @@ defmodule Iclash.DomainTypes.Clan do
       {:error, changeset} -> {:error, changeset}
     end
   end
+
+  # TODO: get all clan tags from db
 end
