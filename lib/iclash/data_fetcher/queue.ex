@@ -1,8 +1,6 @@
 defmodule Iclash.DataFetcher.Queue do
   @moduledoc false
 
-  # TODO: Avoid queuing already queued clans, clan wars, and player.
-
   use GenServer
   alias Iclash.ClashApi
   alias Iclash.DataFetcher.ClanFetcher
@@ -97,7 +95,13 @@ defmodule Iclash.DataFetcher.Queue do
 
   @impl true
   def handle_info({:enqueue, instruction}, state) do
-    {:noreply, %{state | queue: [instruction | state.queue]}}
+    if Enum.member?(state.queue, instruction) do
+      # If exists, do nothing.
+      {:noreply, state}
+    else
+      # Else, add instruction to the queue.
+      {:noreply, %{state | queue: [instruction | state.queue]}}
+    end
   end
 
   @impl true
@@ -107,6 +111,9 @@ defmodule Iclash.DataFetcher.Queue do
   end
 
   defp seed_queue() do
+    # TODO: abstract this into an Agent that hold its state and refreshes periodically.
+    # TODO: Implement black listing of clan/player tags that are not found (404) or have any weird behaviour like querying more than usual.
+
     {:ok, locations} = ClashApi.fetch_locations()
 
     international_id =
