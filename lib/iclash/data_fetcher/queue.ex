@@ -142,27 +142,25 @@ defmodule Iclash.DataFetcher.Queue do
 
   defp handle_instruction(instruction) do
     case instruction do
-      {:fetch_clan, clan_tag} ->
-        case DynamicSupervisor.start_child(Iclash.DataFetcher, {ClanFetcher, clan_tag}) do
-          {:error, :max_children} -> Process.send(self(), {:enqueue, instruction}, [])
-          _ -> :ok
-        end
+      {:fetch_clan, _clan_tag} ->
+        start_fetcher(ClanFetcher, instruction)
 
-      {:fetch_player, player_tag} ->
-        case DynamicSupervisor.start_child(Iclash.DataFetcher, {PlayerFetcher, player_tag}) do
-          {:error, :max_children} -> Process.send(self(), {:enqueue, instruction}, [])
-          _ -> :ok
-        end
+      {:fetch_player, _player_tag} ->
+        start_fetcher(PlayerFetcher, instruction)
 
-      {:fetch_clan_war, clan_tag} ->
-        case DynamicSupervisor.start_child(Iclash.DataFetcher, {ClanWarFetcher, clan_tag}) do
-          {:error, :max_children} -> Process.send(self(), {:enqueue, instruction}, [])
-          _ -> :ok
-        end
+      {:fetch_clan_war, _clan_tag} ->
+        start_fetcher(ClanWarFetcher, instruction)
 
-      instruction ->
-        Logger.error("Unexpected instruction received. instruction=#{instruction}")
+      unexpected ->
+        Logger.error("Unexpected instruction received. instruction=#{inspect(unexpected)}")
         :error
+    end
+  end
+
+  defp start_fetcher(fetcher, {_, tag} = instruction) do
+    case DynamicSupervisor.start_child(Iclash.DataFetcher, {fetcher, tag}) do
+      {:error, :max_children} -> Process.send(self(), {:enqueue, instruction}, [])
+      _ -> :ok
     end
   end
 
