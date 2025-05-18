@@ -34,7 +34,7 @@ defmodule Iclash.DataFetcher.PlayerFetcher do
 
       {:error, {:http_error, %Req.Response{status: 429}}} ->
         # Too many requests, send message back to queue.
-        Queue.enqueue_in({:fetch_player, player_tag}, 5_000)
+        Queue.enqueue_in({:fetch_player, player_tag}, :timer.seconds(5))
         {:stop, :normal, player_tag}
 
       reason ->

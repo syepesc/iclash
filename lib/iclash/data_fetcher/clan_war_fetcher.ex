@@ -44,7 +44,7 @@ defmodule Iclash.DataFetcher.ClanWarFetcher do
 
       {:error, {:http_error, %Req.Response{status: 429}}} ->
         # Too many requests, send message back to queue.
-        Queue.enqueue_in({:fetch_clan_war, clan_tag}, 5_000)
+        Queue.enqueue_in({:fetch_clan_war, clan_tag}, :timer.seconds(5))
         {:stop, :normal, clan_tag}
 
       reason ->

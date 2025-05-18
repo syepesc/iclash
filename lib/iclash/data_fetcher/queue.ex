@@ -75,7 +75,7 @@ defmodule Iclash.DataFetcher.Queue do
       queue: seed_queue()
     }
 
-    Process.send_after(self(), :process_instructions, 10_000)
+    Process.send_after(self(), :process_instructions, :timer.seconds(10))
 
     {:ok, state}
   end

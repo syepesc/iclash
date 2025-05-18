@@ -36,7 +36,7 @@ defmodule Iclash.DataFetcher.ClanFetcher do
 
       {:error, {:http_error, %Req.Response{status: 429}}} ->
         # Too many requests, send message back to queue.
-        Queue.enqueue_in({:fetch_clan, clan_tag}, 5_000)
+        Queue.enqueue_in({:fetch_clan, clan_tag}, :timer.seconds(5))
         {:stop, :normal, clan_tag}
 
       reason ->
@@ -53,17 +53,17 @@ defmodule Iclash.DataFetcher.ClanFetcher do
   end
 
   defp schedule_clan_war_fetch(clan_tag) do
-    Queue.enqueue_in({:fetch_clan_war, clan_tag}, 0)
+    Queue.enqueue_in({:fetch_clan_war, clan_tag}, :timer.seconds(0))
   end
 
   defp schedule_players_fetch(players) do
     Logger.info("Delegating player fetch for #{length(players)} clan members")
-    Enum.each(players, &Queue.enqueue_in({:fetch_player, &1.tag}, 0))
+    Enum.each(players, &Queue.enqueue_in({:fetch_player, &1.tag}, :timer.seconds(0)))
   end
 
   defp schedule_next_fetch(clan_tag) do
-    # I consider that 48 hours is a reasonable fetch interval for clan data, a good minimum could be 24h.
-    fetch_in = :timer.hours(48)
+    # I consider that 24 hours is a reasonable fetch interval for clan data.
+    fetch_in = :timer.hours(24)
     Logger.info("Scheduling next clan fetch in #{fetch_in}ms. clan_tag=#{clan_tag}")
     Queue.enqueue_in({:fetch_clan, clan_tag}, fetch_in)
   end
