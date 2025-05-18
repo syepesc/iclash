@@ -1,4 +1,8 @@
 defmodule Iclash.Utils.ClashApiUtils do
+  @moduledoc """
+  Shared utilities for Clash API needs.
+  """
+
   @doc """
   Formats a date string from a compact format to a more readable ISO 8601 format.
 

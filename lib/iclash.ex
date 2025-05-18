@@ -6,6 +6,7 @@ defmodule Iclash do
   Contexts are also responsible for managing your data, regardless
   if it comes from the database, an external API or others.
 
+  TODO: Fix the tests.
   TODO: Fix ChagesetUtils typo in code, should be ChangesetUtils.
   TODO: Fix Heroe typo in code, should be Hero.
   TODO: Add meaningful error messages when casting an attribute on an ecto changeset in invalid, explore: `:invalid_message` when casting embed/assoc.
