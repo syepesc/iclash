@@ -1,3 +1,4 @@
 elixir 1.17.0-otp-27
 erlang 27.0
 direnv 2.35.0
+flyctl  0.3.118
