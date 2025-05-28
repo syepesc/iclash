@@ -19,7 +19,12 @@ defmodule Iclash.MixProject do
   def application do
     [
       mod: {Iclash.Application, []},
-      extra_applications: [:logger, :runtime_tools, :wx, :observer]
+
+      # NOTE: Deployment will CRASH if extra_applications include :wx or :observer.
+      # To install observer follow their docs: https://fly.io/docs/elixir/advanced-guides/connect-observer-to-your-app/
+      #
+      # For Dev env you can simply add them to: extra_applications: [:logger, :runtime_tools, :wx, :observer].
+      extra_applications: [:logger, :runtime_tools]
     ]
   end
 
