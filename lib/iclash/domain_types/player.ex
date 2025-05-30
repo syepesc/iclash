@@ -54,7 +54,7 @@ defmodule Iclash.DomainTypes.Player do
     |> Repo.transaction()
     |> case do
       {:ok, _transaction_result} ->
-        Logger.debug("Player upserted successfully. player_tag=#{player.tag}")
+        Logger.info("Player upserted successfully. player_tag=#{player.tag}")
         :ok
 
       {:error, reason} ->
