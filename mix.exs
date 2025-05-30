@@ -19,7 +19,12 @@ defmodule Iclash.MixProject do
   def application do
     [
       mod: {Iclash.Application, []},
-      extra_applications: [:logger, :runtime_tools, :wx, :observer]
+
+      # NOTE: Deployment will CRASH if extra_applications include :wx or :observer.
+      # To install observer follow their docs: https://fly.io/docs/elixir/advanced-guides/connect-observer-to-your-app/
+      #
+      # For Dev env you can simply add them to: extra_applications: [:logger, :runtime_tools, :wx, :observer].
+      extra_applications: [:logger, :runtime_tools]
     ]
   end
 
@@ -79,7 +84,7 @@ defmodule Iclash.MixProject do
   defp aliases do
     [
       setup: ["deps.get", "ecto.setup", "assets.setup", "assets.build"],
-      "ecto.setup": ["ecto.create", "ecto.migrate"],
+      "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
       "ecto.reset": ["ecto.drop", "ecto.setup"],
       test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"],
       "assets.setup": ["tailwind.install --if-missing", "esbuild.install --if-missing"],
