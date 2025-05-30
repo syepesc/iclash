@@ -14,6 +14,10 @@ defmodule IclashWeb.Router do
     plug :accepts, ["json"]
   end
 
+  pipeline :dashboard_auth do
+    plug :dashboard_auth_fn
+  end
+
   scope "/", IclashWeb do
     pipe_through :browser
 
@@ -26,19 +30,23 @@ defmodule IclashWeb.Router do
   # end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development
-  if Application.compile_env(:iclash, :dev_routes) do
-    # If you want to use the LiveDashboard in production, you should put
-    # it behind authentication and allow only admins to access it.
-    # If your application does not have an admins-only section yet,
-    # you can use Plug.BasicAuth to set up some basic authentication
-    # as long as you are also using SSL (which you should anyway).
-    import Phoenix.LiveDashboard.Router
+  # If you want to use the LiveDashboard in production, you should put
+  # it behind authentication and allow only admins to access it.
+  # If your application does not have an admins-only section yet,
+  # you can use Plug.BasicAuth to set up some basic authentication
+  # as long as you are also using SSL (which you should anyway).
+  import Phoenix.LiveDashboard.Router
 
-    scope "/dev" do
-      pipe_through :browser
+  scope "/dev" do
+    pipe_through [:browser, :dashboard_auth]
 
-      live_dashboard "/dashboard", metrics: IclashWeb.Telemetry
-      forward "/mailbox", Plug.Swoosh.MailboxPreview
-    end
+    live_dashboard "/dashboard", metrics: IclashWeb.Telemetry
+    forward "/mailbox", Plug.Swoosh.MailboxPreview
+  end
+
+  defp dashboard_auth_fn(conn, _opts) do
+    username = System.fetch_env!("DASHBOARD_USERNAME")
+    password = System.fetch_env!("DASHBOARD_PASSWORD")
+    Plug.BasicAuth.basic_auth(conn, username: username, password: password)
   end
 end
