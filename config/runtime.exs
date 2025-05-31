@@ -59,10 +59,10 @@ if(config_env() == :prod) do
     # TODO: Explain why the following values (defaults were: 10, 1, 50, 1000).
     # https://hexdocs.pm/ecto/Ecto.Repo.html
     # https://hexdocs.pm/db_connection/DBConnection.html#start_link/2-queue-config
-    pool_size: String.to_integer(System.get_env("POOL_SIZE") || "30"),
-    pool_count: 2,
-    queue_target: 1000,
-    queue_interval: 1500,
+    pool_size: String.to_integer(System.get_env("POOL_SIZE") || "80"),
+    # pool_count: 1,
+    queue_target: 50,
+    queue_interval: 1000,
     socket_options: maybe_ipv6
 
   # The secret key base is used to sign/encrypt cookies and other secrets.
