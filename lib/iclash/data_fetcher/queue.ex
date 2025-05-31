@@ -69,7 +69,7 @@ defmodule Iclash.DataFetcher.Queue do
     rate_limit_ms = Map.fetch!(args, :rate_limit_ms)
 
     Logger.info(
-      "Starting data fetcher queue process. pid=#{inspect(self())}, rate_limit=#{rate_limit}, rate_limit_ms=#{rate_limit_ms}"
+      "Init data fetcher queue process. pid=#{inspect(self())}, rate_limit=#{rate_limit}, rate_limit_ms=#{rate_limit_ms}"
     )
 
     state = %{
