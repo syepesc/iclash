@@ -7,7 +7,6 @@ defmodule Iclash.DomainTypes.ClanWar do
   import Ecto.Query
 
   alias Iclash.Repo.Schemas.ClanWarAttack
-  alias Ecto.Multi
   alias Iclash.Repo
   alias Iclash.Repo.Schemas.ClanWar
 
@@ -38,18 +37,14 @@ defmodule Iclash.DomainTypes.ClanWar do
   """
   @spec upsert_clan_war(clan_war :: ClanWar.t()) :: :ok | {:error, any()} | Ecto.Multi.failure()
   def upsert_clan_war(%ClanWar{} = clan_war) do
-    Multi.new()
-    |> Multi.append(insert_query_for_clan_war(clan_war))
-    |> Multi.append(insert_queries_for_attacks(clan_war))
-    |> Repo.transaction()
-    |> case do
-      {:ok, _transaction_result} ->
-        Logger.info("Clan war upserted successfully. clan_tag=#{clan_war.clan_tag}")
-        :ok
-
+    with {:ok, _} <- insert_query_for_clan_war(clan_war),
+         {:ok, _} <- insert_queries_for_attacks(clan_war) do
+      Logger.info("Clan War upserted successfully. clan_tag=#{clan_war.clan_tag}")
+      :ok
+    else
       {:error, reason} ->
         Logger.error(
-          "Transaction failed to upsert clan war. error=#{inspect(reason)} clan_tag=#{clan_war.clan_tag}"
+          "Failed to upsert some Clan War info. error=#{inspect(reason)} clan_tag=#{clan_war.clan_tag}"
         )
 
         {:error, reason}
@@ -59,12 +54,8 @@ defmodule Iclash.DomainTypes.ClanWar do
   # TODO: get clan wars by player tag
 
   defp insert_query_for_clan_war(clan_war) do
-    operation_name = "#{clan_war.clan_tag}_#{clan_war.opponent}_#{clan_war.start_time}"
-
-    Multi.new()
-    |> Multi.insert(
-      {:upsert_clan_war, operation_name},
-      # Remove attacks to handle them sepparately.
+    Repo.insert(
+      # Remove attacks to handle them separately.
       clan_war
       |> Map.put(:attacks, []),
       on_conflict: {:replace_all_except, [:clan_tag, :opponent, :start_time, :inserted_at]},
@@ -73,23 +64,24 @@ defmodule Iclash.DomainTypes.ClanWar do
   end
 
   defp insert_queries_for_attacks(clan_war) do
-    # Update clan_war attacks and keep track of any change.
+    results =
+      Enum.map(clan_war.attacks, fn attack ->
+        Repo.insert(
+          attack
+          |> Map.put(:clan_tag, clan_war.clan_tag)
+          |> Map.put(:opponent, clan_war.opponent)
+          |> Map.put(:war_start_time, clan_war.start_time),
+          on_conflict: {:replace, [:updated_at]},
+          conflict_target: [:clan_tag, :opponent, :war_start_time, :attacker_tag, :defender_tag]
+        )
+      end)
 
-    Enum.reduce(clan_war.attacks, Multi.new(), fn attack, acc ->
-      iteration = acc |> Multi.to_list() |> length()
-      operation_name = "#{attack.attacker_tag}_#{attack.defender_tag}_#{iteration}"
+    errors = results |> Enum.filter(fn r -> elem(r, 0) == :error end)
 
-      Multi.new()
-      |> Multi.insert(
-        {:upsert_attack, operation_name},
-        attack
-        |> Map.put(:clan_tag, clan_war.clan_tag)
-        |> Map.put(:opponent, clan_war.opponent)
-        |> Map.put(:war_start_time, clan_war.start_time),
-        on_conflict: {:replace, [:updated_at]},
-        conflict_target: [:clan_tag, :opponent, :war_start_time, :attacker_tag, :defender_tag]
-      )
-      |> Multi.append(acc)
-    end)
+    if Enum.empty?(errors) do
+      {:ok, results}
+    else
+      {:error, errors}
+    end
   end
 end
