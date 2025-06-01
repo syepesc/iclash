@@ -48,170 +48,98 @@ defmodule Iclash.ClashApi.ClientImpl do
   require Logger
 
   def fetch_player(player_tag) do
-    {duration, response} =
-      :timer.tc(fn ->
-        base_request()
-        |> Req.merge(url: "/players/:player_tag", path_params: [player_tag: player_tag])
-        |> make_request()
-        |> case do
-          {:ok, body} -> Player.from_clash_api(body)
-          # This bubbles-up the returns from make_request/1.
-          error -> error
-        end
-      end)
-
-    :telemetry.execute(
-      [:iclash, :http, :clash_api],
-      %{duration: duration},
-      # optional metadata
-      %{endpoint: "/players"}
-    )
-
-    response
+    base_request()
+    |> Req.merge(url: "/players/:player_tag", path_params: [player_tag: player_tag])
+    |> make_request()
+    |> case do
+      {:ok, body} -> Player.from_clash_api(body)
+      # This bubbles-up the returns from make_request/1.
+      error -> error
+    end
   end
 
   def fetch_clan(clan_tag) do
-    {duration, response} =
-      :timer.tc(fn ->
-        base_request()
-        |> Req.merge(url: "/clans/:clan_tag", path_params: [clan_tag: clan_tag])
-        |> make_request()
-        |> case do
-          {:ok, body} -> Clan.from_map(body)
-          # This bubbles-up the returns from make_request/1.
-          error -> error
-        end
-      end)
-
-    :telemetry.execute(
-      [:iclash, :http, :clash_api],
-      %{duration: duration},
-      # optional metadata
-      %{endpoint: "/clans"}
-    )
-
-    response
+    base_request()
+    |> Req.merge(url: "/clans/:clan_tag", path_params: [clan_tag: clan_tag])
+    |> make_request()
+    |> case do
+      {:ok, body} -> Clan.from_map(body)
+      # This bubbles-up the returns from make_request/1.
+      error -> error
+    end
   end
 
   def fetch_current_war(clan_tag) do
-    {duration, response} =
-      :timer.tc(fn ->
-        base_request()
-        |> Req.merge(url: "/clans/:clan_tag/currentwar", path_params: [clan_tag: clan_tag])
-        |> make_request()
-        |> case do
-          {:ok, body} ->
-            if body["state"] in ["inWar", "warEnded"] do
-              # Handling specific war_type: We need to distinguish between clan_war and clan_war_league,
-              # as the Clash API does not include this field. Therefore, we add it manually
-              # TODO: When implement clan war league fetch also add this field
-              ClanWar.from_clash_api(Map.put(body, "war_type", :clan_war))
-            else
-              # We don't care when clan war is in other states. e.i. like "preparation" or "notInWar".
-              Logger.info("Skipping, clan is not currently in war. clan_tag=#{clan_tag}")
-              {:ok, :not_in_war}
-            end
-
-          # Specific error handling when clans have their war log private.
-          # This error handling came from previous experiences querying the ClashAPI - not confirmed with the official docs yet.
-          {:error, {:http_error, %Req.Response{status: 403}}} ->
-            Logger.info("Skipping, clan war log is private. clan_tag=#{clan_tag}")
-            {:ok, :war_log_private}
-
-          error ->
-            # This bubbles-up the returns from make_request/1.
-            error
+    base_request()
+    |> Req.merge(url: "/clans/:clan_tag/currentwar", path_params: [clan_tag: clan_tag])
+    |> make_request()
+    |> case do
+      {:ok, body} ->
+        if body["state"] in ["inWar", "warEnded"] do
+          # Handling specific war_type: We need to distinguish between clan_war and clan_war_league,
+          # as the Clash API does not include this field. Therefore, we add it manually
+          # TODO: When implement clan war league fetch also add this field
+          ClanWar.from_clash_api(Map.put(body, "war_type", :clan_war))
+        else
+          # We don't care when clan war is in other states. e.i. like "preparation" or "notInWar".
+          Logger.info("Skipping, clan is not currently in war. clan_tag=#{clan_tag}")
+          {:ok, :not_in_war}
         end
-      end)
 
-    :telemetry.execute(
-      [:iclash, :http, :clash_api],
-      %{duration: duration},
-      # optional metadata
-      %{endpoint: "/current_war"}
-    )
+      # Specific error handling when clans have their war log private.
+      # This error handling came from previous experiences querying the ClashAPI - not confirmed with the official docs yet.
+      {:error, {:http_error, %Req.Response{status: 403}}} ->
+        Logger.info("Skipping, clan war log is private. clan_tag=#{clan_tag}")
+        {:ok, :war_log_private}
 
-    response
+      error ->
+        # This bubbles-up the returns from make_request/1.
+        error
+    end
   end
 
   def fetch_locations() do
-    {duration, response} =
-      :timer.tc(fn ->
-        base_request()
-        |> Req.merge(
-          url: "/locations",
-          params: [limit: 500]
-        )
-        |> make_request()
-        |> case do
-          {:ok, body} -> {:ok, body}
-          # This bubbles-up the returns from make_request/1.
-          error -> error
-        end
-      end)
-
-    :telemetry.execute(
-      [:iclash, :http, :clash_api],
-      %{duration: duration},
-      # optional metadata
-      %{endpoint: "/locations"}
+    base_request()
+    |> Req.merge(
+      url: "/locations",
+      params: [limit: 500]
     )
-
-    response
+    |> make_request()
+    |> case do
+      {:ok, body} -> {:ok, body}
+      # This bubbles-up the returns from make_request/1.
+      error -> error
+    end
   end
 
   def fetch_clan_ranking_by_location(location_id, limit) do
-    {duration, response} =
-      :timer.tc(fn ->
-        base_request()
-        |> Req.merge(
-          url: "/locations/:location_id/rankings/clans",
-          path_params: [location_id: location_id],
-          params: [limit: limit]
-        )
-        |> make_request()
-        |> case do
-          {:ok, body} -> {:ok, body}
-          # This bubbles-up the returns from make_request/1.
-          error -> error
-        end
-      end)
-
-    :telemetry.execute(
-      [:iclash, :http, :clash_api],
-      %{duration: duration},
-      # optional metadata
-      %{endpoint: "/clan_rankings"}
+    base_request()
+    |> Req.merge(
+      url: "/locations/:location_id/rankings/clans",
+      path_params: [location_id: location_id],
+      params: [limit: limit]
     )
-
-    response
+    |> make_request()
+    |> case do
+      {:ok, body} -> {:ok, body}
+      # This bubbles-up the returns from make_request/1.
+      error -> error
+    end
   end
 
   def fetch_player_ranking_by_location(location_id, limit) do
-    {duration, response} =
-      :timer.tc(fn ->
-        base_request()
-        |> Req.merge(
-          url: "/locations/:location_id/rankings/players",
-          path_params: [location_id: location_id],
-          params: [limit: limit]
-        )
-        |> make_request()
-        |> case do
-          {:ok, body} -> {:ok, body}
-          # This bubbles-up the returns from make_request/1.
-          error -> error
-        end
-      end)
-
-    :telemetry.execute(
-      [:iclash, :http, :clash_api],
-      %{duration: duration},
-      # optional metadata
-      %{endpoint: "/player_rankings"}
+    base_request()
+    |> Req.merge(
+      url: "/locations/:location_id/rankings/players",
+      path_params: [location_id: location_id],
+      params: [limit: limit]
     )
-
-    response
+    |> make_request()
+    |> case do
+      {:ok, body} -> {:ok, body}
+      # This bubbles-up the returns from make_request/1.
+      error -> error
+    end
   end
 
   defp api_token, do: Application.fetch_env!(:iclash, ClashApiConfig)[:api_token]
@@ -228,11 +156,20 @@ defmodule Iclash.ClashApi.ClientImpl do
   end
 
   defp make_request(%Req.Request{} = req) do
-    Logger.info(
-      "Clash api request attempt. url=#{req.url} params=#{inspect(Map.get(req.options, :params))} path_params=#{inspect(Map.get(req.options, :path_params))}"
+    p = req.options |> Map.get(:params) |> inspect()
+    pp = req.options |> Map.get(:path_params) |> inspect()
+    Logger.info("Clash api request attempt. url=#{req.url} params=#{p} path_params=#{pp}")
+
+    {duration, response} = :timer.tc(fn -> Req.get(req) end)
+
+    :telemetry.execute(
+      [:iclash, :http, :clash_api],
+      %{duration: duration},
+      # optional metadata/tags
+      %{endpoint: req.url}
     )
 
-    case Req.get(req) do
+    case response do
       {:ok, %Req.Response{status: 200} = response} ->
         {:ok, response.body}
 
