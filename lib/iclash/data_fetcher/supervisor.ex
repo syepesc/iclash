@@ -16,7 +16,6 @@ defmodule Iclash.DataFetcher.Supervisor do
   @impl true
   def init(:ok) do
     children = [
-      {Registry, name: Iclash.Registry.DataFetcher, keys: :unique},
       {DynamicSupervisor, name: Iclash.DataFetcher, strategy: :one_for_one},
       {Iclash.DataFetcher.Queue, %{rate_limit: @rate_limit, rate_limit_ms: @rate_limit_ms}},
       {Iclash.DataFetcher.DbStatsFetcher, []}

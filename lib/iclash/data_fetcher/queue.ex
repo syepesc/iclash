@@ -176,6 +176,6 @@ defmodule Iclash.DataFetcher.Queue do
   end
 
   defp via() do
-    {:via, Registry, {Iclash.Registry.DataFetcher, :data_fetcher_queue}}
+    {:via, Registry, {Iclash.Registry, :data_fetcher_queue}}
   end
 end

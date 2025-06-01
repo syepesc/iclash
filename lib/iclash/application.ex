@@ -6,8 +6,9 @@ defmodule Iclash.Application do
   @impl true
   def start(_type, _args) do
     children = [
-      IclashWeb.Telemetry,
-      Iclash.Repo,
+      {IclashWeb.Telemetry, []},
+      {Iclash.Repo, []},
+      {Registry, name: Iclash.Registry, keys: :unique},
       {DNSCluster, query: Application.get_env(:iclash, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Iclash.PubSub},
       {Finch, name: Iclash.Finch},

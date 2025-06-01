@@ -47,7 +47,7 @@ defmodule Iclash.DataFetcher.PlayerFetcher do
   end
 
   defp via(player_tag) do
-    {:via, Registry, {Iclash.Registry.DataFetcher, "player_fetcher_#{player_tag}"}}
+    {:via, Registry, {Iclash.Registry, "player_fetcher_#{player_tag}"}}
   end
 
   defp schedule_next_fetch(player_tag) do

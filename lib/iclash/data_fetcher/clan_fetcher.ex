@@ -49,7 +49,7 @@ defmodule Iclash.DataFetcher.ClanFetcher do
   end
 
   defp via(clan_tag) do
-    {:via, Registry, {Iclash.Registry.DataFetcher, "clan_fetcher_#{clan_tag}"}}
+    {:via, Registry, {Iclash.Registry, "clan_fetcher_#{clan_tag}"}}
   end
 
   defp schedule_clan_war_fetch(clan_tag) do

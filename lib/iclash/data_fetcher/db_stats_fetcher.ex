@@ -81,7 +81,7 @@ defmodule Iclash.DataFetcher.DbStatsFetcher do
   end
 
   defp via() do
-    {:via, Registry, {Iclash.Registry.DataFetcher, :db_stats_fetcher}}
+    {:via, Registry, {Iclash.Registry, :db_stats_fetcher}}
   end
 
   defp schedule_next_fetch() do
