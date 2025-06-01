@@ -1,4 +1,6 @@
 defmodule Iclash.Repo.Schemas.DbStat do
+  @moduledoc false
+
   use Ecto.Schema
   import Ecto.Changeset
 
