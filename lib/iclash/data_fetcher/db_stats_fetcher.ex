@@ -12,19 +12,6 @@ defmodule Iclash.DataFetcher.DbStatsFetcher do
   alias Iclash.Repo.Schemas.DbStat
   require Logger
 
-  # ###########################################################################
-  # Public API
-  # ###########################################################################
-
-  @spec start() :: :ok
-  def start() do
-    GenServer.cast(via(), :start)
-  end
-
-  # ###########################################################################
-  # GenServer callbacks
-  # ###########################################################################
-
   def start_link(_args) do
     GenServer.start_link(__MODULE__, :ok, name: via())
   end
@@ -32,13 +19,8 @@ defmodule Iclash.DataFetcher.DbStatsFetcher do
   @impl true
   def init(:ok) do
     Logger.info("Init database stats fetcher process. pid=#{inspect(self())}")
+    Process.send_after(self(), :fetch_and_persist_db_stats, :timer.seconds(5))
     {:ok, %{}}
-  end
-
-  @impl true
-  def handle_cast(:start, state) do
-    Process.send(self(), :fetch_and_persist_db_stats, [])
-    {:noreply, state}
   end
 
   @impl true

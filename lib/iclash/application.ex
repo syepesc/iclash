@@ -12,7 +12,7 @@ defmodule Iclash.Application do
       {DNSCluster, query: Application.get_env(:iclash, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Iclash.PubSub},
       {Finch, name: Iclash.Finch},
-      {Iclash.DataFetcher.Supervisor, []},
+      {Iclash.DataFetcher.Supervisor, [auto_start: false]},
       # Start to serve requests, typically the child
       IclashWeb.Endpoint
     ]
