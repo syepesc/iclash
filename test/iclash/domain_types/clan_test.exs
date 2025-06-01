@@ -58,8 +58,8 @@ defmodule Iclash.DomainTypes.ClanTest do
   describe "get_clan/1" do
     test "gets a clan and return clan struct", %{clan: clan} do
       :ok = Clan.upsert_clan(clan)
-      clan_form_db = Clan.get_clan(clan.tag)
-      assert %ClanSchema{} = clan_form_db
+      clan_from_db = Clan.get_clan(clan.tag)
+      assert %ClanSchema{} = clan_from_db
     end
 
     test "return error tuple if not found in database", %{clan: clan} do
@@ -70,8 +70,8 @@ defmodule Iclash.DomainTypes.ClanTest do
   describe "upsert_clan/1" do
     test "creates a clan", %{clan: clan} do
       :ok = Clan.upsert_clan(clan)
-      {:ok, clan_form_db} == Clan.get_clan(clan.tag)
-      assert clan_form_db.tag == clan.tag
+      clan_from_db = Clan.get_clan(clan.tag)
+      assert clan_from_db.tag == clan.tag
     end
 
     test "updates a clan", %{clan: clan} do
