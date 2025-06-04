@@ -1,85 +1,62 @@
 # Iclash
 
-## 🏁 The Goal
-
 The goal of this project is to develop a web application that empowers Clash of Clans players and clan managers with access to rich historical data and valuable insights. By visualizing player performance, clan war history, and Clan War League statistics.
 
-## 👷🏻‍♂️ Development Plan
+## 🛡️ About Clash of Clans
 
-### Phase I: Backend
+Clash of Clans is a widely popular mobile strategy game where players build and upgrade their villages by collecting resources—primarily through attacking other players. While the game features many mechanics, iClash focuses on a selected subset that provides rich, structured data:
 
-These are the building blocks of the app, the project was design following the methodology of the book [Designing Elixir Systems with OTP](https://pragprog.com/titles/jgotp/designing-elixir-systems-with-otp/) _(Do Fun Things With Big Loud Workers Bees)_ - Worth to read!
+- Player Profiles.
+- Player Legend League Statistics.  
+- ~~Player Legend League Attacks (TBD)~~.
+- Clans.
+- Clan Wars.
+- ~~Clan War Leagues (CWL) (TBD)~~.
 
-![project-design-overview](/docs/project_design_overview.drawio.png "Project Design Overview")
+All tracked data is updated **daily** (every 24 hours) to maintain accuracy and support historical insights.
 
-#### 1. (Do) Data
+### [About Clash of Clans API](./docs/clash_of_clans_api.md)
 
-To effectively present information about players, clans, and wars, we need to collect data from the Clash of Clans API and store it in our own database. Since the Clash API only provides real-time data and does not maintain historical records, we must implement a system that regularly pulls data from the API and tracks the specific information we want to preserve over time.
+### [About iClash Database](./docs/database_schemas.md)
 
-To communicate with Clash API you must create and account with them [Clash API](https://developer.clashofclans.com/#/) and then create a key, use the token from the created key and use it under the env variable `CLASH_API_TOKEN` also add `CLASH_API_BASE_URL` the default value is `https://api.clashofclans.com/v1`.
+### [About iClash Data Throughput](./docs/data_throughput.md)
 
-> For now, is unknown how to reauthenticate and rate limit of the Clash API.
-
-![iclash-data-fetching](/docs/iclash_data_fetching.drawio.png "Iclash Data Fetching")
-
-There are 3 main context in our database as shown in the ERDs below. **Each table (migration) must be represented as an Ecto Schema and must reflect every detail from one to another.**
-
-##### Player Context
-
-![erd-player-context](/docs/erd_player_context.png "ERD Player Context")
-
-##### Clan Context
-
-![erd-clan-context](/docs/erd_clan_context.png "ERD Clan Context")
-
-##### Clan War Context
-
-![erd-clan-war-context](/docs/erd_clan_war_context.png "ERD Clan War Context")
-
-#### 2. (Fun) Functions
+### Domain Types
 
 WIP
 
-#### 3. (Things) Tests
+### Tests
 
 WIP
 
-#### 4. (Big) Boundaries
+### Boundaries
 
 WIP
 
-#### 5. (Loud) Lifecycle
+### Lifecycle
 
 WIP
 
-#### 6. (Worker Bees) Pools and Dependencies
+### Environment
 
 WIP
 
-#### 7. UI
-
-WIP
-
-#### 8. Environment
-
-WIP
-
-### Phase II: Frontend
+### Frontend
 
 WIP
 💭 Design the UI views.
 
-### Phase III: Deployment
+### Deployment
 
 WIP.
 💭 I guess a cloudformation template that defines a private VPC + EC2 + RDS.
 
-### Phase IV: Monitoring
+### Monitoring
 
 WIP.
 💭 Probably DataDog or any other third-party software that offer metrics out of the box.
 
-### Phase V: CI/CD
+### CI/CD
 
 WIP.
 💭 CI GitHub Actions (mix format, credo, tests, package)
@@ -89,8 +66,8 @@ WIP.
 
 To start your Phoenix server:
 
-* Run `mix setup` to install and setup dependencies
-* Start Phoenix endpoint with `mix phx.server` or inside IEx with `iex -S mix phx.server`
+- Run `mix setup` to install and setup dependencies
+- Start Phoenix endpoint with `mix phx.server` or inside IEx with `iex -S mix phx.server`
 
 Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
 

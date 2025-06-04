@@ -2,19 +2,6 @@
 
 This document outlines the expected **data throughput** of the iClash application, both in terms of **API requests** and **database persistence**, to help understand the system’s scale and performance boundaries.
 
-## 🛡️ About Clash of Clans
-
-Clash of Clans is a widely popular mobile strategy game where players build and upgrade their villages by collecting resources—primarily through attacking other players. While the game features many mechanics, iClash focuses on a selected subset that provides rich, structured data:
-
-- Player Profiles.
-- Player Legend League Statistics.  
-- ~~Player Legend League Attacks (TBD)~~.
-- Clans.
-- Clan Wars.
-- ~~Clan War Leagues (CWL) (TBD)~~.
-
-All tracked data is updated **daily** (every 24 hours) to maintain accuracy and support historical insights.
-
 ## 👀 About the Data Gathered and Persisted
 
 The following calculation represents the **initial seed data strategy** implemented by iClash.
@@ -55,7 +42,7 @@ To maintain comprehensive coverage, iClash fetches data from the Clash of Clans 
 
 ## 🧮 Database Throughput
 
-While estimating the number of HTTP requests is fairly straightforward, database throughput is more nuanced and highly dependent on the underlying schema design. For a deeper dive into the database structure and data retention strategy, see the [iClash Data Documentation](../README.md#1-do-data).
+While estimating the number of HTTP requests is fairly straightforward, database throughput is more nuanced and highly dependent on the underlying schema design. For a deeper dive into the database structure and data retention strategy, see the [iClash Database Documentation](./database_schemas.md).
 
 - **Clans**:
   - 1 record per clan, 2500 bytes per record for every new clan insertion.
