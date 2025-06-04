@@ -52,15 +52,9 @@ if(config_env() == :prod) do
   config :iclash, Iclash.Repo,
     # ssl: true,
     url: database_url,
-    # NOTE: Fly.io default max pool_size is 100 (this can be modify, reach them out).
-    # Deployment will CRASH if the pool size is greater.
-    # We are currently setting: ~60 (pool_size * pool_count) + ~10 that are initialized by fly.io or postgres itself.
-
-    # TODO: Explain why the following values (defaults were: 10, 1, 50, 1000).
-    # https://hexdocs.pm/ecto/Ecto.Repo.html
-    # https://hexdocs.pm/db_connection/DBConnection.html#start_link/2-queue-config
-    pool_size: String.to_integer(System.get_env("POOL_SIZE") || "80"),
-    # pool_count: 1,
+    # NOTE: Fly.io default max pool_size is 100 (this can be modify, reach them out). Deployment will CRASH if the pool size is greater.
+    pool_size: String.to_integer(System.get_env("POOL_SIZE") || "20"),
+    pool_count: 1,
     queue_target: 50,
     queue_interval: 1000,
     socket_options: maybe_ipv6
