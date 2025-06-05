@@ -1,9 +1,5 @@
 # Iclash
 
-The goal of this project is to develop a web application that empowers Clash of Clans players and clan managers with access to rich historical data and valuable insights. By visualizing player performance, clan war history, and Clan War League statistics.
-
-## 🛡️ About Clash of Clans
-
 Clash of Clans is a widely popular mobile strategy game where players build and upgrade their villages by collecting resources—primarily through attacking other players. While the game features many mechanics, iClash focuses on a selected subset that provides rich, structured data:
 
 - Player Profiles.
@@ -14,6 +10,10 @@ Clash of Clans is a widely popular mobile strategy game where players build and 
 - ~~Clan War Leagues (CWL) (TBD)~~.
 
 All tracked data is updated **daily** (every 24 hours) to maintain accuracy and support historical insights.
+
+The goal of this project is to develop a web application that empowers Clash of Clans players and clan managers with access to rich historical data and valuable insights. By visualizing player performance, clan war history, and Clan War League statistics.
+
+## Docs
 
 ### [About Clash of Clans API](./docs/clash_of_clans_api.md)
 
