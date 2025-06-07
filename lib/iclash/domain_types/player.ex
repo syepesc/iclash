@@ -65,9 +65,11 @@ defmodule Iclash.DomainTypes.Player do
   # TODO: get all player tags from db
 
   defp insert_player(player) do
+    :telemetry.execute([:iclash, :repo, :query], %{count: 1}, %{action: "insert_player"})
+
     Repo.insert(
       # Remove heroes, troops, spells, hero equipment, and
-      # legend_statistics to handle them sepparately.
+      # legend_statistics to handle them separately.
       player
       |> Map.put(:heroes, [])
       |> Map.put(:troops, [])
@@ -75,7 +77,8 @@ defmodule Iclash.DomainTypes.Player do
       |> Map.put(:hero_equipment, [])
       |> Map.put(:legend_statistics, []),
       on_conflict: {:replace_all_except, [:tag, :inserted_at]},
-      conflict_target: [:tag]
+      conflict_target: [:tag],
+      telemetry_options: [action: "insert_player"]
     )
   end
 
@@ -85,10 +88,13 @@ defmodule Iclash.DomainTypes.Player do
     # Only `updated_at` will be replaced. Else, add the new hero.
     results =
       Enum.map(new_heroes, fn hero ->
+        :telemetry.execute([:iclash, :repo, :query], %{count: 1}, %{action: "insert_hero"})
+
         Repo.insert(
           Map.put(hero, :player_tag, player_tag),
           on_conflict: {:replace_all_except, [:player_tag, :name, :level, :inserted_at]},
-          conflict_target: [:player_tag, :name, :level]
+          conflict_target: [:player_tag, :name, :level],
+          telemetry_options: [action: "insert_hero"]
         )
       end)
 
@@ -108,10 +114,13 @@ defmodule Iclash.DomainTypes.Player do
 
     results =
       Enum.map(new_troops, fn troop ->
+        :telemetry.execute([:iclash, :repo, :query], %{count: 1}, %{action: "insert_troop"})
+
         Repo.insert(
           Map.put(troop, :player_tag, player_tag),
           on_conflict: {:replace_all_except, [:player_tag, :name, :level, :inserted_at]},
-          conflict_target: [:player_tag, :name, :level]
+          conflict_target: [:player_tag, :name, :level],
+          telemetry_options: [action: "insert_troop"]
         )
       end)
 
@@ -128,12 +137,16 @@ defmodule Iclash.DomainTypes.Player do
     # Update player spells and keep track of any change.
     # If there is a spell with the same `player_tag`, `name`, and `level`.
     # Only `updated_at` will be replaced. Else, add the new spell.
+
     results =
       Enum.map(new_spells, fn spell ->
+        :telemetry.execute([:iclash, :repo, :query], %{count: 1}, %{action: "insert_spell"})
+
         Repo.insert(
           Map.put(spell, :player_tag, player_tag),
           on_conflict: {:replace_all_except, [:player_tag, :name, :level, :inserted_at]},
-          conflict_target: [:player_tag, :name, :level]
+          conflict_target: [:player_tag, :name, :level],
+          telemetry_options: [action: "insert_spell"]
         )
       end)
 
@@ -153,10 +166,15 @@ defmodule Iclash.DomainTypes.Player do
 
     results =
       Enum.map(new_hero_equipment, fn he ->
+        :telemetry.execute([:iclash, :repo, :query], %{count: 1}, %{
+          action: "insert_hero_equipment"
+        })
+
         Repo.insert(
           Map.put(he, :player_tag, player_tag),
           on_conflict: {:replace_all_except, [:player_tag, :name, :level, :inserted_at]},
-          conflict_target: [:player_tag, :name, :level]
+          conflict_target: [:player_tag, :name, :level],
+          telemetry_options: [action: "insert_hero_equipment"]
         )
       end)
 
@@ -173,12 +191,18 @@ defmodule Iclash.DomainTypes.Player do
     # Update player legend statistics and keep track of any change.
     # If there is a hero equipment with the same `player_tag`, `name`, and `level`.
     # Only `updated_at` will be replaced. Else, add the new hero equipment.
+
     results =
       Enum.map(new_legend_statistics, fn ls ->
+        :telemetry.execute([:iclash, :repo, :query], %{count: 1}, %{
+          action: "insert_legend_statistic"
+        })
+
         Repo.insert(
           Map.put(ls, :player_tag, player_tag),
           on_conflict: {:replace_all_except, [:player_tag, :id, :inserted_at]},
-          conflict_target: [:player_tag, :id]
+          conflict_target: [:player_tag, :id],
+          telemetry_options: [action: "insert_legend_statistic"]
         )
       end)
 

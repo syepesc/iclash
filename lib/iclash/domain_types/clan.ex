@@ -28,9 +28,12 @@ defmodule Iclash.DomainTypes.Clan do
   """
   @spec upsert_clan(clan :: Clan.t()) :: :ok | {:error, Ecto.Changeset.t()}
   def upsert_clan(%Clan{} = clan) do
+    :telemetry.execute([:iclash, :repo, :query], %{count: 1}, %{action: "insert_clan"})
+
     case Repo.insert(clan,
            on_conflict: {:replace_all_except, [:tag, :inserted_at]},
-           conflict_target: :tag
+           conflict_target: :tag,
+           telemetry_options: [action: "insert_clan"]
          ) do
       {:ok, _clan} -> :ok
       {:error, changeset} -> {:error, changeset}

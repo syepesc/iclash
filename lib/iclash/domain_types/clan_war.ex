@@ -54,25 +54,33 @@ defmodule Iclash.DomainTypes.ClanWar do
   # TODO: get clan wars by player tag
 
   defp insert_query_for_clan_war(clan_war) do
+    :telemetry.execute([:iclash, :repo, :query], %{count: 1}, %{action: "insert_clan_war"})
+
     Repo.insert(
       # Remove attacks to handle them separately.
       clan_war
       |> Map.put(:attacks, []),
       on_conflict: {:replace_all_except, [:clan_tag, :opponent, :start_time, :inserted_at]},
-      conflict_target: [:clan_tag, :opponent, :start_time]
+      conflict_target: [:clan_tag, :opponent, :start_time],
+      telemetry_options: [action: "insert_clan_war"]
     )
   end
 
   defp insert_queries_for_attacks(clan_war) do
     results =
       Enum.map(clan_war.attacks, fn attack ->
+        :telemetry.execute([:iclash, :repo, :query], %{count: 1}, %{
+          action: "insert_clan_war_attack"
+        })
+
         Repo.insert(
           attack
           |> Map.put(:clan_tag, clan_war.clan_tag)
           |> Map.put(:opponent, clan_war.opponent)
           |> Map.put(:war_start_time, clan_war.start_time),
           on_conflict: {:replace, [:updated_at]},
-          conflict_target: [:clan_tag, :opponent, :war_start_time, :attacker_tag, :defender_tag]
+          conflict_target: [:clan_tag, :opponent, :war_start_time, :attacker_tag, :defender_tag],
+          telemetry_options: [action: "insert_clan_war_attack"]
         )
       end)
 

@@ -53,27 +53,40 @@ defmodule IclashWeb.Telemetry do
       ),
 
       # Database Metrics
+      # Read more -> https://hexdocs.pm/ecto/Ecto.Repo.html#module-telemetry-events
       summary("iclash.repo.query.total_time",
         unit: {:native, :millisecond},
-        description: "The sum of the other measurements"
+        description: "The sum of the other measurements",
+        tags: [:action],
+        tag_values: &set_query_action/1
       ),
       summary("iclash.repo.query.decode_time",
         unit: {:native, :millisecond},
+        tags: [:action],
+        tag_values: &set_query_action/1,
         description: "The time spent decoding the data received from the database"
       ),
       summary("iclash.repo.query.query_time",
         unit: {:native, :millisecond},
+        tags: [:action],
+        tag_values: &set_query_action/1,
         description: "The time spent executing the query"
       ),
       summary("iclash.repo.query.queue_time",
         unit: {:native, :millisecond},
+        tags: [:action],
+        tag_values: &set_query_action/1,
         description: "The time spent waiting for a database connection"
       ),
       summary("iclash.repo.query.idle_time",
         unit: {:native, :millisecond},
+        tags: [:action],
+        tag_values: &set_query_action/1,
         description:
           "The time the connection spent waiting before being checked out for the query"
       ),
+      # This is sum instead of counter because the insert_all queries should be added instead of counted
+      sum("iclash.repo.query.count", tags: [:action]),
 
       # VM Metrics
       summary("vm.memory.total", unit: {:byte, :megabyte}),
@@ -82,7 +95,8 @@ defmodule IclashWeb.Telemetry do
       summary("vm.total_run_queue_lengths.io"),
 
       # Clash API Metrics
-      summary("iclash.http.clash_api.duration", unit: {:native, :microsecond}, tags: [:endpoint])
+      summary("iclash.http.clash_api.duration", unit: {:native, :microsecond}, tags: [:endpoint]),
+      counter("iclash.http.clash_api.count", tags: [:endpoint])
     ]
   end
 
@@ -92,5 +106,17 @@ defmodule IclashWeb.Telemetry do
       # This function must call :telemetry.execute/3 and a metric must be added above.
       # {IclashWeb, :count_users, []}
     ]
+  end
+
+  # To understand how this work read the example in -> https://hexdocs.pm/phoenix/telemetry.html#extracting-tag-values-from-plug-conn
+  defp set_query_action(metadata) do
+    # The :action value come from the option :telemetry_options in Repo.insert()/insert_all()/etc.
+    action = metadata[:options][:action]
+
+    if action == nil do
+      metadata
+    else
+      Map.put(metadata, :action, action)
+    end
   end
 end
