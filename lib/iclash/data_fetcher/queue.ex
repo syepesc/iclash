@@ -50,6 +50,10 @@ defmodule Iclash.DataFetcher.Queue do
     GenServer.cast(via(), {:enqueue_in, instruction, delay_in_ms})
   end
 
+  def get_state() do
+    GenServer.call(via(), :get_state)
+  end
+
   # ###########################################################################
   # GenServer callbacks
   # ###########################################################################
@@ -70,7 +74,7 @@ defmodule Iclash.DataFetcher.Queue do
     state = %{
       rate_limit: rate_limit,
       rate_limit_ms: rate_limit_ms,
-      queue: []
+      queue: seed_queue()
     }
 
     Process.send_after(self(), :process_instructions, :timer.seconds(10))
@@ -108,6 +112,11 @@ defmodule Iclash.DataFetcher.Queue do
   def handle_cast({:enqueue_in, instruction, delay_in_ms}, state) do
     Process.send_after(self(), {:enqueue, instruction}, delay_in_ms)
     {:noreply, state}
+  end
+
+  @impl true
+  def handle_call(:get_state, _from, state) do
+    {:reply, state, state}
   end
 
   defp seed_queue() do
