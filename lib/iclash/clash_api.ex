@@ -164,7 +164,7 @@ defmodule Iclash.ClashApi.ClientImpl do
 
     :telemetry.execute(
       [:iclash, :http, :clash_api],
-      %{duration: duration},
+      %{duration: duration, count: 1},
       # optional metadata/tags
       %{endpoint: req.url}
     )
