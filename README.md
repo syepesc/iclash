@@ -3,7 +3,7 @@
 Clash of Clans is a widely popular mobile strategy game where players build and upgrade their villages by collecting resources—primarily through attacking other players. While the game features many mechanics, iClash focuses on a selected subset that provides rich, structured data:
 
 - Player Profiles.
-- Player Legend League Statistics.  
+- Player Legend League Statistics.
 - ~~Player Legend League Attacks (TBD)~~.
 - Clans.
 - Clan Wars.
@@ -20,6 +20,8 @@ The goal of this project is to develop a web application that empowers Clash of 
 ### [About iClash Database](./docs/database_schemas.md)
 
 ### [About iClash Data Throughput](./docs/data_throughput.md)
+
+### [About iClash Data Processing Pipeline](./docs/data_processing_pipeline.png)
 
 ### Domain Types
 
